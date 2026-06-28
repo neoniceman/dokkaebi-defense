@@ -256,6 +256,10 @@ function newGame(){
 }
 
 // ---------- enemies ----------
+// 적 spd는 "셀 36px" 기준 px/s. 화면이 커지면 CELL/SPD_REF로 비례 스케일해서
+// (반지름이 ×CELL인 것과 동일하게) 화면 크기와 무관하게 보드 대비 속도를 일정하게 유지.
+// → 큰 화면에서 적이 겹쳐 나오거나, 골인 지점까지 못 가서 문이 안 깎이던 문제 해결.
+const SPD_REF=36;
 const ETYPES={
   jab:{hp:34,spd:46,r:.30,col:'#6b5d8a',gold:6,name:'잡귀'},
   fast:{hp:22,spd:82,r:.26,col:'#4f8a6b',gold:7,name:'그림자'},
@@ -354,7 +358,7 @@ function update(dt){
   for(const e of G.enemies){
     if(e.slowT>0){e.slowT-=dt; if(e.slowT<=0)e.slowF=1;}
     if(e.regen>0 && e.hp<e.max && !e.dead){ e.hp=Math.min(e.max, e.hp+e.regen*dt); }
-    const sp=e.spd*e.slowF;
+    const sp=e.spd*e.slowF*(CELL/SPD_REF); // 속도를 셀 크기에 비례 → 화면 커져도 일관
     e.dist+=sp*dt;
     const p=posAt(e.dist); e.x=p.x; e.y=p.y; e.ang=p.ang;
     if(e.dist>=PLEN){ e.dead=true; G.life-=(e.boss?5:1); spawnHit(e.x,e.y,'#c8442e',e.boss?12:6); SND.hurtLife();
