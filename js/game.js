@@ -5,6 +5,9 @@ const $=id=>document.getElementById(id);
 
 // ---------- sprite assets (CraftPix · Tower Defense 2D Game Kit) ----------
 const IMG={}, ESPRITE={}, UNIT={}; let FX_BURST=[], FX_FIRE=[], FX_WATER=[], FX_BOOM=[]; let _imgPending=0;
+// 유닛별 캐릭터 비율(r=프레임높이 대비 캐릭터높이, foot=발 위치) → 모든 유닛 크기 통일용
+const UNIT_GEOM={archer:{r:0.633,foot:0.919},elf:{r:0.493,foot:0.789},wizard:{r:0.7,foot:0.955},
+  wizard2:{r:0.6,foot:0.955},viking:{r:0.693,foot:0.943},druid:{r:0.694,foot:0.867},ent:{r:0.896,foot:0.938}};
 function _img(src){ const im=new Image(); _imgPending++;
   im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
 function loadAssets(){
@@ -198,19 +201,19 @@ function posAt(dist){
 
 // ---------- tower defs ----------
 const TOWERS={
-  jangseung:{name:'궁수탑',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',unit:'archer',
+  jangseung:{name:'궁수',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',unit:'archer',
     desc:'길목을 지키는 궁수. 단일 대상 명중.'},
-  kkachi:{name:'석궁탑',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',unit:'elf',
+  kkachi:{name:'석궁수',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',unit:'elf',
     desc:'빠른 연사. 약하지만 끊임없이 쏜다.'},
-  bul:{name:'흑마법탑',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',unit:'wizard',
+  bul:{name:'흑마법사',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',unit:'wizard',
     desc:'범위 화염 마법. 뭉친 무리에 강하다.'},
-  seori:{name:'빙결탑',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',unit:'druid',
+  seori:{name:'빙결술사',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',unit:'druid',
     desc:'적을 얼려 둔화. 피해는 적다.'},
-  beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'viking',
+  beom:{name:'전사',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'viking',
     desc:'일격필살의 대물. 느리지만 묵직하다.'},
-  arcane:{name:'비전 마법탑',cost:120,range:3.5,rate:1.4,dmg:55,col:'#b48a3a',kind:'single',unlocked:false,sprite:'t_arcane',unit:'wizard2',
+  arcane:{name:'비전술사',cost:120,range:3.5,rate:1.4,dmg:55,col:'#b48a3a',kind:'single',unlocked:false,sprite:'t_arcane',unit:'wizard2',
     desc:'먼 거리 고위력 비전 마법. 느린 저격형.'},
-  cannon:{name:'포탑',cost:110,range:2.6,rate:1.8,dmg:30,col:'#7a4a2a',kind:'splash',splash:1.5,unlocked:false,sprite:'t_cannon',unit:'ent',
+  cannon:{name:'엔트',cost:110,range:2.6,rate:1.8,dmg:30,col:'#7a4a2a',kind:'splash',splash:1.5,unlocked:false,sprite:'t_cannon',unit:'ent',
     desc:'느리지만 강력한 범위 포격.'},
 };
 const ORDER=['jangseung','kkachi','bul','seori','beom','arcane','cannon'];
@@ -934,12 +937,16 @@ function drawEnemy(e){
     ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12); ctx.lineJoin='round';
     drawEnemyBody(e,s,type);
   }
-  // ---- shared status overlays ----
-  if(e.slowT>0){ctx.globalAlpha=.4;ctx.fillStyle='#bfe3f0';ctx.beginPath();ctx.arc(0,0,s,0,6.28);ctx.fill();ctx.globalAlpha=1;}
-  if(e.burn>0){ctx.globalAlpha=.35+Math.random()*0.2;ctx.fillStyle='#e0612e';
-    ctx.beginPath();ctx.arc(0,0,s*0.95,0,6.28);ctx.fill();ctx.globalAlpha=1;}
-  if(e.mark>0){ctx.strokeStyle='#9a5b1e';ctx.lineWidth=s*0.1;
-    ctx.beginPath();ctx.arc(0,0,s*1.15,0,6.28);ctx.stroke();ctx.strokeStyle='#241c16';}
+  // ---- 상태 오버레이 (스프라이트 몸통에 맞춘 타원) ----
+  const oy=-s*0.6, orx=s*1.0, ory=s*1.4;
+  if(e.slowT>0){ ctx.globalAlpha=.34; ctx.fillStyle='#9fdcff';
+    ctx.beginPath(); ctx.ellipse(0,oy,orx,ory,0,0,6.28); ctx.fill();
+    ctx.globalAlpha=.7; ctx.strokeStyle='#d6f1ff'; ctx.lineWidth=Math.max(1.5,s*0.12);
+    ctx.beginPath(); ctx.ellipse(0,oy,orx,ory,0,0,6.28); ctx.stroke(); ctx.globalAlpha=1; }
+  if(e.burn>0){ ctx.globalAlpha=.28+Math.random()*0.18; ctx.fillStyle='#e0612e';
+    ctx.beginPath(); ctx.ellipse(0,oy,orx*0.95,ory*0.95,0,0,6.28); ctx.fill(); ctx.globalAlpha=1; }
+  if(e.mark>0){ ctx.strokeStyle='#e0a82e'; ctx.lineWidth=Math.max(1.5,s*0.12);
+    ctx.beginPath(); ctx.ellipse(0,oy,orx*1.05,ory*1.05,0,0,6.28); ctx.stroke(); ctx.strokeStyle='#241c16'; }
   ctx.restore();
   // hp bar — 스프라이트 머리 위에 (스프라이트 높이 ≈ s*3.4, 상단 ≈ e.y-2.24s)
   if(e.hp<e.max){const w=s*2.1,hb=Math.max(3,s*(e.boss?0.22:0.18)); const by=e.y-s*2.4-hb;
@@ -1097,7 +1104,7 @@ function drawTower(t){
     const st=towerStat(t);
     const reach=st.range*CELL*G.buffs.range*0.95*t.flame;
     const half=0.42;
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(t.ang);
+    ctx.save(); ctx.translate(cx,cy-CELL*0.45); ctx.rotate(t.ang);   // 시전자 손 높이에서 분사
     // layered flame: outer red, mid orange, inner yellow, with flicker
     const layers=[['#c8442e',1.0,0.5],['#e0a82e',0.82,0.62],['#ffd34d',0.6,0.72],['#fff3c0',0.34,0.85]];
     for(const [col,rf,af] of layers){
@@ -1133,10 +1140,13 @@ function drawTower(t){
     else { frames=U.idle; idx=Math.floor(performance.now()/120 + (t.c*3+t.r))%frames.length; }
     const im=frames[idx];
     if(imgReady(im)){
-      const dh=CELL*1.75, dw=dh*(im.naturalWidth/im.naturalHeight);
-      const flip=Math.cos(t.ang||0)>0;           // 적이 오른쪽이면 좌우 반전
+      // 모든 유닛을 같은 캐릭터 높이(CH 셀)로 렌더 + 발을 받침에 정렬
+      const gm=UNIT_GEOM[def.unit]||{r:0.6,foot:0.93}, CH=0.95;
+      const dh=CH*CELL/gm.r, dw=dh*(im.naturalWidth/im.naturalHeight);
+      const top=CELL*0.3 - gm.foot*dh;             // 발이 받침(+0.3셀)에 닿도록
+      const flip=Math.cos(t.ang||0)>0;             // 적이 오른쪽이면 좌우 반전
       ctx.save(); if(flip) ctx.scale(-1,1);
-      ctx.drawImage(im, -dw/2, -dh*0.66, dw, dh);
+      ctx.drawImage(im, -dw/2, top, dw, dh);
       ctx.restore();
     }
   } else {
