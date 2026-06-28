@@ -9,13 +9,14 @@ function _img(src){ const im=new Image(); _imgPending++;
   im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
 function loadAssets(){
   for(let i=1;i<=4;i++) IMG['map'+i]=_img('assets/maps/map'+i+'.png');
-  ['archer','ballista','dark','frost','camp'].forEach(k=>IMG['t_'+k]=_img('assets/towers/'+k+'.png'));
+  ['archer','ballista','dark','frost','camp','arcane','cannon'].forEach(k=>IMG['t_'+k]=_img('assets/towers/'+k+'.png'));
   IMG.arrow=_img('assets/fx/arrow.png');
   IMG.ice=_img('assets/fx/ice.png');
   IMG.fireball=_img('assets/fx/fireball.png');
   IMG.u_archer=_img('assets/units/archer.png');
   IMG.u_knight=_img('assets/units/knight.png');
   const EFRAMES={goblin:10,brute:10,orc:10,imp:10,ogre:10,darkgob:10,king:10,bat:10,yeti:10,axer:10,
+    mage:20,steel:20,dknight:10,swordsman:10,
     boss:10,boss2:10,boss3:20,boss4:20};
   for(const k in EFRAMES){ ESPRITE[k]=[]; for(let i=0;i<EFRAMES[k];i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); }
   for(let i=0;i<12;i++) FX_BURST[i]=_img('assets/fx/burst/f'+i+'.png');
@@ -198,8 +199,12 @@ const TOWERS={
     desc:'적을 얼려 둔화. 피해는 적다.'},
   beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'u_knight',
     desc:'일격필살의 대물. 느리지만 묵직하다.'},
+  arcane:{name:'비전 마법탑',cost:120,range:3.5,rate:1.4,dmg:55,col:'#b48a3a',kind:'single',unlocked:false,sprite:'t_arcane',
+    desc:'먼 거리 고위력 비전 마법. 느린 저격형.'},
+  cannon:{name:'포탑',cost:110,range:2.6,rate:1.8,dmg:30,col:'#7a4a2a',kind:'splash',splash:1.5,unlocked:false,sprite:'t_cannon',
+    desc:'느리지만 강력한 범위 포격.'},
 };
-const ORDER=['jangseung','kkachi','bul','seori','beom'];
+const ORDER=['jangseung','kkachi','bul','seori','beom','arcane','cannon'];
 
 // ---------- upgrade system (per-stat, independent) ----------
 const MAXSTEP=5;                 // each stat upgradable 0..5
@@ -258,6 +263,14 @@ const BRANCHES={
     {id:'sunder', name:'방어무시',desc:'적의 방어력을 완전히 무시한다.'},
     {id:'roar',   name:'포효', desc:'처치 시 주변 적에게 피해가 터진다.'},
   ],
+  arcane:[
+    {id:'sunder', name:'방어무시',desc:'적의 방어력을 완전히 무시한다.'},
+    {id:'execute',name:'처형', desc:'체력 20% 이하 적을 즉시 처단한다.'},
+  ],
+  cannon:[
+    {id:'blast',  name:'대폭발',desc:'폭발 범위가 크게 넓어진다.'},
+    {id:'burn',   name:'화상', desc:'불이 붙어 2초간 지속 피해를 준다.'},
+  ],
 };
 function branchCost(t){ const def=TOWERS[t.id]; return Math.round(def.cost*1.6); }
 function canChooseBranch(t){ return !t.branch && totalLevels(t)>=BRANCH_REQ; }
@@ -292,6 +305,10 @@ const ETYPES={
   heal:{hp:90,spd:42,r:.36,col:'#5f9a6b',gold:18,name:'주술사',regen:14,sprite:'king'},        // self-heal → rewards burst/splash
   yeti:{hp:130,spd:70,r:.38,col:'#b9c0c4',gold:18,name:'설인',regen:10,sprite:'yeti'},          // 빠르고 자가회복하는 거구
   axer:{hp:240,spd:34,r:.42,col:'#3f7a8a',gold:30,name:'푸른 도끼병',armor:6,sprite:'axer'},     // 중장 브루저(고체력+방어)
+  mage:{hp:78,spd:92,r:.30,col:'#5a5a7a',gold:16,name:'흑마법사',sprite:'mage'},                // 저체력 고속 질주자
+  steel:{hp:140,spd:38,r:.36,col:'#9aa3aa',gold:24,name:'강철 마귀',armor:11,sprite:'steel'},   // 초중장갑(고피해 보상)
+  swordsman:{hp:185,spd:46,r:.40,col:'#5a4a3a',gold:26,name:'대검 기사',armor:5,sprite:'swordsman'}, // 균형 브루저
+  dknight:{hp:340,spd:30,r:.44,col:'#3a3030',gold:36,name:'흑기사',armor:6,sprite:'dknight'},   // 거대 탱크
   boss:{hp:1400,spd:24,r:.62,col:'#7a2f55',gold:160,name:'마왕',armor:5,boss:true,sprite:'boss'}, // huge HP wall
 };
 // HP scaling per wave: 10웨이브까진 선형(초반 난이도 유지), 이후 준지수로 급상승.
@@ -304,11 +321,15 @@ function buildWave(n){
   if(n>=2)pool.push('fast'); if(n>=4)pool.push('tank');
   if(n>=3)pool.push('split');
   if(n>=6)pool.push('armor');
+  if(n>=5)pool.push('mage');
+  if(n>=7)pool.push('steel');
   if(n>=8)pool.push('swift');
   if(n>=9)pool.push('yeti');
-  if(n>=10)pool.push('heal');
+  if(n>=10)pool.push('heal','swordsman');
   if(n>=11)pool.push('axer');
-  const costs={jab:2,fast:2,tank:5,split:3,armor:6,swift:4,heal:5,yeti:5,axer:8};
+  if(n>=14)pool.push('dknight');
+  const costs={jab:2,fast:2,tank:5,split:3,armor:6,swift:4,heal:5,yeti:5,axer:8,
+    mage:3,steel:6,swordsman:6,dknight:9};
   while(b>0){
     let t=pool[Math.floor(Math.random()*pool.length)];
     const cost=costs[t]||2;
@@ -640,6 +661,14 @@ function drawBullet(b){
     const h=CELL*0.42, w=h*(ice.naturalWidth/ice.naturalHeight);
     ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
     ctx.drawImage(ice,-w/2,-h/2,w,h); ctx.restore();
+    return;
+  }
+  // 비전 마법탑/포탑 → 화염구(마력탄·포탄)
+  const fb=IMG.fireball;
+  if((id==='arcane'||id==='cannon') && imgReady(fb)){
+    const h=CELL*(id==='cannon'?0.5:0.42), w=h*(fb.naturalWidth/fb.naturalHeight);
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
+    ctx.drawImage(fb,-w/2,-h/2,w,h); ctx.restore();
     return;
   }
   // 물리 발사체 — 탑마다 모양이 다름: 궁수=긴 화살 / 석궁=짧고 굵은 볼트 / 병영=묵직한 큰 화살
