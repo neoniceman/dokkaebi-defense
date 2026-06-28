@@ -193,7 +193,7 @@ const ORDER=['jangseung','kkachi','bul','seori','beom'];
 const MAXSTEP=5;                 // each stat upgradable 0..5
 const STEP={dmg:0.30, rate:0.10, range:0.10, splash:0.12}; // base-fraction per step
 const STAT_COSTF={dmg:0.55, rate:0.55, range:0.40, splash:0.45}; // ×base cost
-const GROWTH=1.5;                // cost grows per step already bought
+const GROWTH=1.6;                // cost grows per step already bought (만렙 비용↑ → 타워 난사 억제)
 // which stats each tower kind can upgrade
 function statsFor(id){ const def=TOWERS[id];
   return def.kind==='splash'? ['dmg','rate','range','splash'] : ['dmg','rate','range']; }
@@ -283,9 +283,9 @@ const ETYPES={
 // HP scaling per wave: 10웨이브까진 선형(초반 난이도 유지), 이후 준지수로 급상승.
 // 플레이어 화력이 카드/업글로 곱셈 성장하므로 적 체력도 후반엔 곱셈으로 따라붙어
 // '맵 앞에서 전멸'하는 추월 지점을 크게 뒤로 민다.
-function hpScale(n){ return 1 + n*0.13 + (n>10 ? Math.pow(1.12, n-10)-1 : 0); }
+function hpScale(n){ return 1 + n*0.14 + (n>10 ? Math.pow(1.15, n-10)-1 : 0); }
 function buildWave(n){
-  const q=[]; const budget=8+n*5; let b=budget;
+  const q=[]; const budget=8+n*6; let b=budget;
   const pool=['jab'];
   if(n>=2)pool.push('fast'); if(n>=4)pool.push('tank');
   if(n>=3)pool.push('split');
@@ -557,16 +557,16 @@ function spawnBranchFx(x,y,col){
 // ---------- wave end / cards ----------
 function endWave(){
   G.inWave=false;
-  const bonus=10+G.wave*3; G.gold+=bonus;
+  const bonus=10+G.wave*2; G.gold+=bonus;
   if(G.wave>G.best){G.best=G.wave; localStorage.setItem('dokkaebi_best',G.best);}
   updateHUD();
   showCards();
 }
 const CARDPOOL=[
-  {t:'예리한 부적',d:'모든 수문장 피해 +12%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.12},
-  {t:'바람 신발',d:'모든 수문장 공격속도 +10%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.10},
+  {t:'예리한 부적',d:'모든 수문장 피해 +10%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.10},
+  {t:'바람 신발',d:'모든 수문장 공격속도 +8%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.08},
   {t:'천리안',d:'모든 수문장 사거리 +8%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.08},
-  {t:'엽전 주머니',d:'처치 보상 +18%, 엽전 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.18;G.gold+=40;}},
+  {t:'엽전 주머니',d:'처치 보상 +15%, 엽전 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.15;G.gold+=40;}},
   {t:'성벽 보수',d:'성문 생명 +6 회복',tag:'수호',rare:0,svg:'life',act:()=>{G.life+=6;}},
 ];
 function unlockCard(id){const t=TOWERS[id];return {t:t.name+' 해금',d:t.desc,tag:'수문장',rare:1,svg:id,act:()=>{t.unlocked=true;syncTray();}};}
