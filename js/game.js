@@ -864,10 +864,11 @@ function drawEnemy(e){
   }
   // ---- 상태 오버레이 (스프라이트 몸통 기준) ----
   const oy=-s*0.7, orx=s*1.0, ory=s*1.4;
-  // 빙결: Water Ball 보호막으로 몬스터를 감쌈 (몬스터 크기에 맞춤)
+  // 빙결: Water Ball 보호막으로 몬스터를 통째로 감쌈
+  // (스프라이트 캐릭터 중심 ≈ -0.37s, 높이 ≈ 2.55s. 구슬은 프레임의 70%만 채움 → sz=4.2s)
   if(e.slowT>0 && FX_WATER.length){
-    const im=FX_WATER[Math.floor(performance.now()/90)%FX_WATER.length], sz=s*3.2;
-    if(imgReady(im)){ ctx.globalAlpha=0.72; ctx.drawImage(im,-sz/2,oy-sz/2,sz,sz); ctx.globalAlpha=1; }
+    const im=FX_WATER[Math.floor(performance.now()/90)%FX_WATER.length], sz=s*4.2, cyc=-s*0.37;
+    if(imgReady(im)){ ctx.globalAlpha=0.68; ctx.drawImage(im,-sz/2,cyc-sz/2,sz,sz); ctx.globalAlpha=1; }
   }
   if(e.burn>0){ ctx.globalAlpha=.28+Math.random()*0.18; ctx.fillStyle='#e0612e';
     ctx.beginPath(); ctx.ellipse(0,oy,orx*0.95,ory*0.95,0,0,6.28); ctx.fill(); ctx.globalAlpha=1; }
