@@ -3,170 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>도깨비 수문장 — 맵 일람</title>
+<title>성채 수호전 — 전장 일람</title>
 <style>
-  :root{
-    --ink:#241c16; --bone:#f3ead6; --cheong:#2f6f8f; --jeok:#c8442e;
-    --hwang:#e0a82e; --heuk:#1d1712; --paper:#e3d6ba; --line:#2b211a;
-  }
+  :root{ --ink:#241c16; --bone:#f3ead6; --jeok:#c8442e; --hwang:#e0a82e; }
   *{box-sizing:border-box;}
-  body{margin:0; background:#1d1712;
-    font-family:'Gowun Batang','Nanum Myeongjo',ui-serif,Georgia,serif; color:var(--bone);
-    background-image:
-      radial-gradient(120% 80% at 50% -10%, #3a2c20 0%, #1d1712 60%);}
-  header{text-align:center; padding:30px 20px 10px;}
-  header h1{margin:0; font-size:26px; letter-spacing:.1em; color:var(--hwang);
-    text-shadow:2px 2px 0 #000;}
+  body{margin:0; background:#1d1712; color:var(--bone);
+    font-family:'Gowun Batang','Nanum Myeongjo',ui-serif,Georgia,serif;
+    background-image:radial-gradient(120% 80% at 50% -10%, #3a2c20 0%, #1d1712 60%);}
+  header{text-align:center; padding:30px 20px 6px;}
+  header h1{margin:0; font-size:26px; letter-spacing:.1em; color:var(--hwang); text-shadow:2px 2px 0 #000;}
   header h1 .b{color:var(--jeok);}
   header p{margin:8px 0 0; font-size:13px; opacity:.65; letter-spacing:.08em;}
   .rule{width:60px; height:3px; background:var(--jeok); margin:16px auto 0; border-radius:2px;}
-  .grid{display:grid; gap:20px; padding:24px 18px 50px; max-width:1080px; margin:0 auto;
-    grid-template-columns:repeat(auto-fill,minmax(290px,1fr));}
+  .grid{display:grid; gap:20px; padding:24px 18px 50px; max-width:1000px; margin:0 auto;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
   .card{background:var(--bone); border:3px solid var(--ink); border-radius:9px;
-    overflow:hidden; box-shadow:0 8px 0 #00000055; color:var(--ink);
-    display:flex; flex-direction:column;}
-  .card .top{display:flex; align-items:baseline; gap:8px; padding:13px 15px 9px;
-    border-bottom:2px solid var(--ink); background:#efe4ce;}
+    overflow:hidden; box-shadow:0 8px 0 #00000055; color:var(--ink);}
+  .card .pic{width:100%; aspect-ratio:16/9; object-fit:cover; display:block; border-bottom:2px solid var(--ink);}
+  .card .top{display:flex; align-items:baseline; gap:8px; padding:11px 15px 4px;}
   .card .idx{font-size:12px; font-weight:700; color:#fff; background:var(--ink);
     width:24px; height:24px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto;}
-  .card .nm{font-size:19px; font-weight:700; letter-spacing:.04em;}
-  .card .tag{margin-left:auto; font-size:10.5px; letter-spacing:.1em; color:#fff;
-    background:var(--cheong); padding:3px 9px; border-radius:11px; align-self:center;}
-  canvas{display:block; width:100%; height:auto; background:
-    radial-gradient(120% 90% at 50% 0%, #efe4ce 0%, #e3d6ba 60%, #d6c6a4 100%);}
-  .card .desc{padding:12px 15px 15px; font-size:13px; line-height:1.55; color:#4a3c2c;}
-  .card .meta{display:flex; gap:14px; padding:0 15px 14px; font-size:11.5px; color:#7a6a52;}
-  .card .meta span b{color:var(--ink);}
-  .legend{display:flex; gap:18px; justify-content:center; flex-wrap:wrap;
-    font-size:12px; opacity:.8; padding:0 20px 30px;}
-  .legend i{display:inline-block; width:12px; height:12px; border-radius:50%;
-    margin-right:5px; vertical-align:-1px; border:1.5px solid #000;}
+  .card .nm{font-size:19px; font-weight:700;}
+  .card .d{padding:4px 15px 16px; font-size:13px; line-height:1.55; color:#4a3c2c;}
   footer{text-align:center; font-size:11px; opacity:.4; padding:0 0 30px;}
 </style>
 </head>
 <body>
 <header>
-  <h1><span class="b">도깨비</span> 수문장 · 맵 일람</h1>
-  <p>고개를 넘어오는 잡귀의 길 — 다섯 갈래</p>
+  <h1><span class="b">성채</span> 수호전 · 전장 일람</h1>
+  <p>마물이 밀려오는 다섯 갈래 전장</p>
   <div class="rule"></div>
 </header>
-
-<div class="legend">
-  <span><i style="background:#2f6f8f"></i>시작 (잡귀 출현)</span>
-  <span><i style="background:#c8442e"></i>성문 (지켜야 할 곳)</span>
-  <span><i style="background:#cdb78e"></i>적의 이동 경로</span>
-</div>
-
 <div class="grid" id="grid"></div>
-<footer>도깨비 수문장 — 프로토타입 맵 미리보기</footer>
-
+<footer>성채 수호전 — 전장 일람</footer>
 <script>
 const MAPS=[
-  { id:'gogae', name:'뱀고개', tag:'표준',
-    corners:[[0,1],[14,1],[14,3],[0,3],[0,5],[14,5],[14,7],[0,7],[0,9],[14,9]],
-    desc:'여섯 줄로 빽빽하게 접히는 긴 사행. 가장 길어, 화력을 여러 구간에 나눠야 한다.' },
-  { id:'sipja', name:'십자령', tag:'계단',
-    corners:[[0,1],[4,1],[4,5],[8,5],[8,1],[12,1],[12,6],[14,6],[14,8],[2,8],[2,10],[14,10]],
-    desc:'위아래로 펼쳐지는 계단형. 길이 넓게 흩어져 길목 선택이 중요하다.' },
-  { id:'nagseon', name:'소용돌이', tag:'겹침',
-    corners:[[0,1],[14,1],[14,9],[2,9],[2,3],[12,3],[12,7],[5,7],[5,5],[9,5]],
-    desc:'안으로 말려드는 나선. 경로가 가까이 겹쳐, 한 자리에서 같은 적을 여러 번 때릴 수 있다.' },
-  { id:'eotgal', name:'엇갈림', tag:'비대칭',
-    corners:[[0,2],[11,2],[11,5],[3,5],[3,8],[14,8],[14,10],[6,10],[6,6],[0,6]],
-    desc:'길이가 들쭉날쭉한 비대칭 지그재그. 한쪽이 뭉쳐 있어 집중 방어형 진영에 맞다.' },
-  { id:'jangmun', name:'장문곡', tag:'수직',
-    corners:[[0,10],[2,10],[2,1],[5,1],[5,10],[8,10],[8,1],[11,1],[11,10],[14,10],[14,4]],
-    desc:'위아래로 오르내리는 빗살. 세로로 긴 사거리를 가진 수문장이 빛난다.' },
+ {bg:'map1',nm:'마른 뼈 사막',d:'고목과 백골이 나뒹구는 메마른 사막. 굽이진 길이 성으로 곧장 이어진다.'},
+ {bg:'map2',nm:'수정 동굴',d:'푸른 수정이 솟은 마법 지대. 빙결 마법이 유난히 잘 어울리는 전장.'},
+ {bg:'map3',nm:'잿빛 협곡',d:'마물이 기어나오는 동굴과 잿빛 바위의 협곡. 길이 길고 구불구불하다.'},
+ {bg:'map4',nm:'폐허의 숲',d:'무너진 석주와 이끼 낀 폐허가 늘어선 숲. 갈래길이 많아 시야가 어지럽다.'},
+ {bg:'map3',nm:'망자의 길',d:'잿빛 협곡 깊은 곳, 망자들이 끝없이 행군하는 외길.'},
 ];
-const REF_COLS=15, REF_ROWS=11;
-
-function expandCorners(corners){
-  const path=[];
-  for(let i=0;i<corners.length;i++){
-    const [c0,r0]=corners[i];
-    if(i===0){ path.push([c0,r0]); continue; }
-    const [pc,pr]=corners[i-1];
-    if(c0!==pc){ const s=c0>pc?1:-1; for(let c=pc+s;c!==c0+s;c+=s) path.push([c,r0]); }
-    else { const s=r0>pr?1:-1; for(let r=pr+s;r!==r0+s;r+=s) path.push([c0,r]); }
-  }
-  return path;
-}
-
-function renderMap(canvas, map){
-  const PAD=14;
-  const CW=canvas.width, CH=canvas.height;
-  const cell=Math.min((CW-PAD*2)/REF_COLS,(CH-PAD*2)/REF_ROWS);
-  const ox=(CW-cell*REF_COLS)/2, oy=(CH-cell*REF_ROWS)/2;
-  const ctx=canvas.getContext('2d');
-  const ctr=(c,r)=>({x:ox+c*cell+cell/2, y:oy+r*cell+cell/2});
-  ctx.clearRect(0,0,CW,CH);
-
-  // ground grid
-  ctx.strokeStyle='#00000012'; ctx.lineWidth=1;
-  for(let c=0;c<=REF_COLS;c++){ctx.beginPath();ctx.moveTo(ox+c*cell,oy);ctx.lineTo(ox+c*cell,oy+REF_ROWS*cell);ctx.stroke();}
-  for(let r=0;r<=REF_ROWS;r++){ctx.beginPath();ctx.moveTo(ox,oy+r*cell);ctx.lineTo(ox+REF_COLS*cell,oy+r*cell);ctx.stroke();}
-
-  // buildable cells subtly (non-path)
-  const path=expandCorners(map.corners);
-  const blocked=new Set(path.map(p=>p[0]+','+p[1]));
-
-  const WP=map.corners.map(([c,r])=>ctr(c,r));
-  // path stroke
-  ctx.lineCap='round'; ctx.lineJoin='round';
-  ctx.strokeStyle='#c2a875'; ctx.lineWidth=cell*0.8;
-  ctx.beginPath(); ctx.moveTo(WP[0].x,WP[0].y);
-  for(let i=1;i<WP.length;i++)ctx.lineTo(WP[i].x,WP[i].y); ctx.stroke();
-  ctx.strokeStyle='#b3996a'; ctx.lineWidth=cell*0.8;
-  ctx.setLineDash([cell*0.06,cell*0.22]); ctx.globalAlpha=.5;
-  ctx.beginPath(); ctx.moveTo(WP[0].x,WP[0].y);
-  for(let i=1;i<WP.length;i++)ctx.lineTo(WP[i].x,WP[i].y); ctx.stroke();
-  ctx.globalAlpha=1; ctx.setLineDash([]);
-
-  // direction arrows along path
-  ctx.fillStyle='#8a6a3a';
-  for(let i=1;i<WP.length;i++){
-    const a=WP[i-1], b=WP[i];
-    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
-    const ang=Math.atan2(b.y-a.y,b.x-a.x);
-    const s=cell*0.16;
-    ctx.save(); ctx.translate(mx,my); ctx.rotate(ang);
-    ctx.beginPath(); ctx.moveTo(s,0); ctx.lineTo(-s,-s*0.8); ctx.lineTo(-s,s*0.8); ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-
-  // start node
-  const s=WP[0];
-  ctx.fillStyle='#2f6f8f'; ctx.strokeStyle='#241c16'; ctx.lineWidth=2.5;
-  ctx.beginPath(); ctx.arc(s.x,s.y,cell*0.26,0,6.28); ctx.fill(); ctx.stroke();
-  ctx.fillStyle='#f3ead6'; ctx.font='bold '+(cell*0.3)+'px serif';
-  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('始',s.x,s.y+cell*0.02);
-
-  // gate at end
-  const g=WP[WP.length-1];
-  ctx.fillStyle='#7a3b22'; ctx.strokeStyle='#241c16'; ctx.lineWidth=2.5;
-  const gw=cell*0.62, gh=cell*0.7;
-  ctx.beginPath(); ctx.rect(g.x-gw/2,g.y-gh/2,gw,gh); ctx.fill(); ctx.stroke();
-  ctx.fillStyle='#c8442e'; ctx.fillRect(g.x-gw/2,g.y-gh/2,gw,gh*0.22);
-  ctx.fillStyle='#f3ead6'; ctx.font='bold '+(cell*0.26)+'px serif';
-  ctx.fillText('門',g.x,g.y+cell*0.06);
-}
-
 const grid=document.getElementById('grid');
-MAPS.forEach((map,i)=>{
-  const card=document.createElement('div'); card.className='card';
-  const path=expandCorners(map.corners);
-  const buildCells=REF_COLS*REF_ROWS-new Set(path.map(p=>p[0]+','+p[1])).size;
-  card.innerHTML=
-    '<div class="top"><span class="idx">'+(i+1)+'</span>'+
-      '<span class="nm">'+map.name+'</span>'+
-      '<span class="tag">'+map.tag+'</span></div>'+
-    '<canvas width="540" height="396"></canvas>'+
-    '<div class="desc">'+map.desc+'</div>'+
-    '<div class="meta"><span>경로 길이 <b>'+path.length+'칸</b></span>'+
-      '<span>세울 자리 <b>약 '+buildCells+'칸</b></span>'+
-      '<span>꺾임 <b>'+(map.corners.length-1)+'회</b></span></div>';
-  grid.appendChild(card);
-  renderMap(card.querySelector('canvas'), map);
+MAPS.forEach((m,i)=>{
+  const el=document.createElement('div'); el.className='card';
+  el.innerHTML='<img class="pic" src="../assets/maps/'+m.bg+'.png" alt="'+m.nm+'">'+
+   '<div class="top"><span class="idx">'+(i+1)+'</span><span class="nm">'+m.nm+'</span></div>'+
+   '<div class="d">'+m.d+'</div>';
+  grid.appendChild(el);
 });
 </script>
 </body>

@@ -3,377 +3,86 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>도깨비 수문장 — 몬스터 도감</title>
+<title>성채 수호전 — 마물 도감</title>
 <style>
-  :root{
-    --ink:#241c16; --bone:#f3ead6; --cheong:#2f6f8f; --jeok:#c8442e;
-    --hwang:#e0a82e; --heuk:#1d1712; --moss:#5d7a4f;
-  }
+  :root{ --ink:#241c16; --bone:#f3ead6; --cheong:#2f6f8f; --jeok:#c8442e;
+    --hwang:#e0a82e; --heuk:#1d1712; --moss:#5d7a4f; }
   *{box-sizing:border-box;}
   body{margin:0; background:#1d1712; color:var(--bone);
     font-family:'Gowun Batang','Nanum Myeongjo',ui-serif,Georgia,serif;
     background-image:radial-gradient(120% 80% at 50% -10%, #3a2c20 0%, #1d1712 60%);}
   header{text-align:center; padding:30px 20px 6px;}
-  header h1{margin:0; font-size:26px; letter-spacing:.1em; color:var(--hwang);
-    text-shadow:2px 2px 0 #000;}
+  header h1{margin:0; font-size:26px; letter-spacing:.1em; color:var(--hwang); text-shadow:2px 2px 0 #000;}
   header h1 .b{color:var(--jeok);}
   header p{margin:8px 0 0; font-size:13px; opacity:.65; letter-spacing:.08em;}
   .rule{width:60px; height:3px; background:var(--jeok); margin:16px auto 0; border-radius:2px;}
-  .grid{display:grid; gap:20px; padding:24px 18px 50px; max-width:1080px; margin:0 auto;
-    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
+  .grid{display:grid; gap:18px; padding:24px 18px 50px; max-width:1080px; margin:0 auto;
+    grid-template-columns:repeat(auto-fill,minmax(290px,1fr));}
   .card{background:var(--bone); border:3px solid var(--ink); border-radius:9px;
-    overflow:hidden; box-shadow:0 8px 0 #00000055; color:var(--ink);
-    display:flex; flex-direction:column; cursor:pointer; transition:transform .1s;}
-  .card:hover{transform:translateY(-4px);}
+    overflow:hidden; box-shadow:0 8px 0 #00000055; color:var(--ink); display:flex; flex-direction:column;}
   .card .top{display:flex; align-items:center; gap:9px; padding:12px 15px;
     border-bottom:2px solid var(--ink); background:#efe4ce;}
   .card .idx{font-size:12px; font-weight:700; color:#fff; background:var(--ink);
     width:24px; height:24px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto;}
   .card .nm{font-size:19px; font-weight:700; letter-spacing:.04em;}
-  .card .nm small{display:block; font-size:10px; opacity:.5; letter-spacing:.2em; font-weight:400;}
-  .card .tier{margin-left:auto; font-size:10.5px; letter-spacing:.08em; color:#fff;
-    padding:3px 9px; border-radius:11px;}
-  .portrait{display:flex; align-items:center; justify-content:center; padding:8px 0 4px;
-    background:radial-gradient(60% 80% at 50% 40%, #efe4ce 0%, #e0d2b2 100%); position:relative;}
-  .portrait .play{position:absolute; right:10px; bottom:6px; font-size:11px; color:#7a6a52;
-    background:#fff7e8; border:1.5px solid var(--ink); border-radius:11px; padding:2px 9px;}
-  canvas{display:block;}
-  /* preview modal */
-  #modal{position:fixed; inset:0; background:#1d1712ee; z-index:50; display:none;
-    align-items:center; justify-content:center; padding:18px;}
-  #modal .box{background:var(--bone); border:3px solid var(--ink); border-radius:11px;
-    width:100%; max-width:420px; color:var(--ink); box-shadow:0 12px 0 #00000066; overflow:hidden;}
-  #modal .mhead{display:flex; align-items:center; gap:9px; padding:13px 16px;
-    background:#efe4ce; border-bottom:2px solid var(--ink);}
-  #modal .mhead .mnm{font-size:19px; font-weight:700;}
-  #modal .mhead .mtier{margin-left:auto; font-size:11px; color:#fff; padding:3px 10px; border-radius:11px;}
-  #modal canvas{display:block; width:100%; background:
-    radial-gradient(120% 90% at 50% 0%, #efe4ce 0%, #e3d6ba 60%, #d6c6a4 100%);}
-  #modal .mdesc{padding:12px 16px; font-size:13px; line-height:1.55; color:#4a3c2c;}
-  #modal .mclose{display:block; width:100%; border:none; border-top:2px solid var(--ink);
-    background:var(--jeok); color:#fff; font-family:inherit; font-size:15px; font-weight:700;
-    padding:12px; cursor:pointer; letter-spacing:.05em;}
-  #modal .mclose:active{background:#a8351f;}
+  .card .tier{margin-left:auto; font-size:10.5px; letter-spacing:.08em; color:#fff; padding:3px 9px; border-radius:11px;}
+  .portrait{display:flex; align-items:flex-end; justify-content:center; height:140px; padding:6px;
+    background:radial-gradient(60% 80% at 50% 45%, #efe4ce 0%, #ddccab 100%);}
+  .portrait img{max-height:128px; max-width:80%; image-rendering:auto; filter:drop-shadow(0 4px 3px #0003);}
   .desc{padding:11px 15px 4px; font-size:13px; line-height:1.55; color:#4a3c2c;}
-  .traits{display:flex; flex-wrap:wrap; gap:6px; padding:6px 15px 12px;}
-  .trait{font-size:11px; padding:3px 9px; border-radius:11px; border:1.5px solid var(--ink);
-    background:#fff7e8;}
   .stats{padding:4px 15px 16px;}
   .row{display:flex; align-items:center; gap:9px; margin:6px 0; font-size:12px;}
   .row .lab{width:42px; color:#7a6a52; flex:0 0 auto;}
   .bar{flex:1; height:9px; background:#d8c9a8; border-radius:5px; overflow:hidden; border:1px solid #00000022;}
   .bar i{display:block; height:100%; border-radius:5px;}
-  .row .val{width:30px; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); font-weight:700;}
+  .row .val{width:34px; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); font-weight:700;}
   footer{text-align:center; font-size:11px; opacity:.4; padding:0 0 30px;}
 </style>
 </head>
 <body>
 <header>
-  <h1><span class="b">도깨비</span> 수문장 · 몬스터 도감</h1>
-  <p>고개를 넘는 다섯 잡귀의 생김과 성질</p>
+  <h1><span class="b">성채</span> 수호전 · 마물 도감</h1>
+  <p>성을 노리고 몰려오는 마물들의 생김과 성질</p>
   <div class="rule"></div>
 </header>
-
 <div class="grid" id="grid"></div>
-<footer>도깨비 수문장 — 프로토타입 몬스터 도감</footer>
-
-<div id="modal">
-  <div class="box">
-    <div class="mhead"><span class="mnm" id="mNm"></span><span class="mtier" id="mTier"></span></div>
-    <canvas id="mCanvas" width="420" height="200"></canvas>
-    <div class="mdesc" id="mDesc"></div>
-    <button class="mclose" id="mClose">닫기</button>
-  </div>
-</div>
-
+<footer>성채 수호전 — 마물 도감</footer>
 <script>
-// mirrors ETYPES from the game, plus codex-only flavor
-const MONSTERS=[
-  { id:'jab', name:'잡귀', read:'JAB-GWI', col:'#6b5d8a', tierCol:'#6b5d8a', tier:'잡졸',
-    hp:34, spd:46, gold:6, r:34,
-    desc:'고개 어귀를 가장 먼저 넘어오는 흔한 잡귀. 약하지만 수가 많아 방심하면 성문을 민다.',
-    traits:['기본형','무리 출현'] },
-  { id:'fast', name:'그림자', read:'GEU-RIM-JA', col:'#4f8a6b', tierCol:'#4f8a6b', tier:'쾌속',
-    hp:22, spd:82, gold:7, r:30,
-    desc:'몸이 얇아 바람처럼 빠르다. 체력은 낮으나 사거리 짧은 수문장은 놓치기 쉽다.',
-    traits:['고속 이동','저체력'] },
-  { id:'tank', name:'독각귀', read:'DOK-GAK-GWI', col:'#8a4f4f', tierCol:'#8a4f4f', tier:'중장',
-    hp:120, spd:30, gold:14, r:46,
-    desc:'외뿔의 우람한 도깨비. 굼뜨지만 체력이 두꺼워, 화력을 집중하지 않으면 끝까지 버틴다.',
-    traits:['고체력','느림','고보상'] },
-  { id:'split', name:'분열귀', read:'BUN-YEOL-GWI', col:'#7a8a4f', tierCol:'#7a8a4f', tier:'특수',
-    hp:46, spd:50, gold:9, r:38, splits:true,
-    desc:'쓰러질 때 둘로 갈라진다. 둔화로 묶어두고 범위 공격으로 한꺼번에 정리하는 편이 좋다.',
-    traits:['사망 시 분열','범위에 약함'] },
-  { id:'gold', name:'금두꺼비', read:'GEUM-DU-KKEO-BI', col:'#e0a82e', tierCol:'#c8442e', tier:'희귀',
-    hp:50, spd:60, gold:40, r:32,
-    desc:'네 물결마다 한 번 나타나는 복덩이. 놓치면 큰 엽전이 달아나니 반드시 잡아라.',
-    traits:['엽전 폭증','주기적 출현'] },
-  { id:'armor', name:'갑주귀', read:'GAP-JU-GWI', col:'#5b6b78', tierCol:'#5b6b78', tier:'후반',
-    hp:140, spd:34, gold:22, r:40, armor:7, wave:6,
-    desc:'은빛 판금을 두른 도깨비. 타격마다 방어력만큼 피해가 깎여, 약한 연사로는 거의 통하지 않는다. 피해를 강화한 수문장이 답.',
-    traits:['방어력 7','피해 강화 필수','6물결~'] },
-  { id:'swift', name:'신속귀', read:'SIN-SOK-GWI', col:'#c25a8a', tierCol:'#c25a8a', tier:'후반',
-    hp:60, spd:120, gold:20, r:30, wave:8,
-    desc:'고개를 쏜살같이 가로지른다. 사거리 짧은 수문장은 한두 방밖에 못 맞힌다. 공속·사거리 강화로 잡아야 한다.',
-    traits:['초고속','공속·사거리 필요','8물결~'] },
-  { id:'heal', name:'환쟁이', read:'HWAN-JAENG-I', col:'#5f9a6b', tierCol:'#5f9a6b', tier:'후반',
-    hp:90, spd:42, gold:18, r:36, regen:14, wave:10,
-    desc:'초록 오라를 두르고 스스로 상처를 아문다. 찔끔찔끔 때리면 회복으로 버티니, 집중 화력이나 범위로 한 번에 몰아쳐야 한다.',
-    traits:['초당 회복','집중·범위 필요','10물결~'] },
-  { id:'boss', name:'도깨비대왕', read:'DAE-WANG', col:'#7a2f55', tierCol:'#7a2f55', tier:'보스',
-    hp:1400, spd:24, gold:160, r:62, armor:5, wave:12,
-    desc:'세 뿔의 관을 쓴 거대한 두목. 체력 수천에 방어력까지 갖췄고, 성문에 닿으면 생명을 다섯이나 앗아간다. 종합 화력의 시험대.',
-    traits:['거대 체력','방어력 5','12물결부터'] },
+const TIERCOL={잡졸:'#6b5d8a',쾌속:'#4f8a6b',중장:'#8a4f4f',희귀:'#c8442e',특수:'#7a8a4f',후반:'#5b6b78',보스:'#7a2f55'};
+// sprite = 게임 적 스프라이트 폴더, hp/spd/armor = 기준 스탯(웨이브 스케일 전)
+const MON=[
+ {s:'goblin',nm:'고블린',tier:'잡졸',hp:34,spd:46,ar:0,d:'성문을 가장 먼저 두드리는 흔한 고블린. 약하지만 수가 많아 방심하면 성벽을 민다.'},
+ {s:'bat',nm:'그림자 박쥐',tier:'쾌속',hp:22,spd:82,ar:0,d:'날개로 전장을 빠르게 가로지른다. 체력은 낮으나 사거리 짧은 탑은 놓치기 쉽다.'},
+ {s:'ogre',nm:'오우거',tier:'중장',hp:120,spd:30,ar:0,d:'우람한 거구. 굼뜨지만 체력이 두꺼워 화력을 집중하지 않으면 끝까지 버틴다.'},
+ {s:'imp',nm:'보물 임프',tier:'희귀',hp:50,spd:60,ar:0,d:'처치하면 금화를 듬뿍 떨군다. 절대 흘려보내지 말 것.'},
+ {s:'darkgob',nm:'분열 고블린',tier:'특수',hp:46,spd:50,ar:0,d:'쓰러지면 둘로 갈라진다. 광역 화력으로 한 번에 정리해야 한다.'},
+ {s:'brute',nm:'중갑병',tier:'후반',hp:140,spd:34,ar:7,d:'두꺼운 판금을 둘렀다. 타격마다 방어력만큼 피해가 깎여 약한 연사는 거의 통하지 않는다.'},
+ {s:'orc',nm:'광전사 오크',tier:'후반',hp:60,spd:120,ar:0,d:'전장을 쏜살같이 가로지른다. 공속·사거리를 강화한 탑이라야 잡을 수 있다.'},
+ {s:'king',nm:'주술사',tier:'후반',hp:90,spd:42,ar:0,d:'스스로 상처를 치유한다. 순간 화력이나 범위 폭발로 단숨에 끝내야 한다.'},
+ {s:'yeti',nm:'설인',tier:'후반',hp:130,spd:70,ar:0,d:'빠른 데다 자가회복까지 하는 거구. 화력이 모자라면 끝없이 버틴다.'},
+ {s:'mage',nm:'흑마법사',tier:'후반',hp:78,spd:92,ar:0,d:'저체력이나 매우 빠르다. 사거리 안에 오래 두지 못하면 그대로 성벽까지 닿는다.'},
+ {s:'steel',nm:'강철 마귀',tier:'후반',hp:140,spd:38,ar:11,d:'초중장갑의 마귀. 방어무시나 고피해 한 방이 아니면 거의 흠집조차 나지 않는다.'},
+ {s:'swordsman',nm:'대검 기사',tier:'후반',hp:185,spd:46,ar:5,d:'체력과 속도, 방어가 고루 균형 잡힌 브루저. 어중간한 방어선은 그냥 밀어버린다.'},
+ {s:'dknight',nm:'흑기사',tier:'후반',hp:340,spd:30,ar:6,d:'압도적인 체력의 거대 탱크. 집중 포화가 아니면 성문 앞까지 살아서 닿는다.'},
+ {s:'boss',nm:'마왕',tier:'보스',hp:1400,spd:24,ar:5,d:'12물결부터 5물결마다 강림. 마왕·돌 골렘·해골 기사·심연의 군주 넷이 번갈아 나타난다.'},
 ];
-
-const MAXHP=1400, MAXSPD=120, MAXGOLD=160;
-
-function drawMonster(canvas, m){
-  const ctx=canvas.getContext('2d');
-  const cx=canvas.width/2, cy=canvas.height/2+8;
-  const s=m.r*1.5;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save(); ctx.translate(cx,cy);
-  if(m.regen){ ctx.save(); ctx.globalAlpha=.18; ctx.fillStyle='#7ec46a';
-    ctx.beginPath(); ctx.arc(0,0,s*1.45,0,6.28); ctx.fill(); ctx.restore(); }
-  ctx.fillStyle='#0003'; ctx.beginPath(); ctx.ellipse(0,s*0.9,s*0.9,s*0.32,0,0,6.28); ctx.fill();
-  ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12); ctx.lineJoin='round';
-  const e={type:m.id,col:m.col,boss:m.id==='boss',regen:m.regen||0};
-  cxBody(ctx,e,s,m.id);
-  ctx.restore();
-}
-function cxEyes(ctx,s,dx,dy,r){ // helper: pale eyes with dark pupils
-  ctx.fillStyle='#f3ead6';ctx.beginPath();ctx.arc(-dx,dy,r,0,6.28);ctx.arc(dx,dy,r,0,6.28);ctx.fill();
-  ctx.fillStyle='#241c16';ctx.beginPath();ctx.arc(-dx+r*0.1,dy+r*0.15,r*0.45,0,6.28);ctx.arc(dx+r*0.15,dy+r*0.15,r*0.45,0,6.28);ctx.fill();
-}
-function cxBody(ctx,e,s,type){
-  const t=performance.now()/1000;
-  if(type==='fast'){
-    // 그림자: translucent wisp with a trailing tail, no legs
-    ctx.globalAlpha=.78; ctx.fillStyle=e.col;
-    ctx.beginPath(); ctx.arc(0,-s*0.1,s,Math.PI,0); // dome head
-    ctx.quadraticCurveTo(s,s*0.6,s*0.4,s*0.9);
-    ctx.quadraticCurveTo(0,s*0.6,-s*0.4,s*0.9);
-    ctx.quadraticCurveTo(-s,s*0.6,-s,-s*0.1); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.globalAlpha=1;
-    cxEyes(ctx,s,s*0.3,-s*0.12,s*0.2);
-    return;
-  }
-  if(type==='gold'){
-    // 금두꺼비: a fat golden toad, squat and wide
-    ctx.fillStyle=e.col;
-    ctx.beginPath(); ctx.ellipse(0,s*0.1,s*1.15,s*0.85,0,0,6.28); ctx.fill(); ctx.stroke();
-    // eye bumps on top
-    ctx.beginPath(); ctx.arc(-s*0.45,-s*0.45,s*0.34,0,6.28); ctx.arc(s*0.45,-s*0.45,s*0.34,0,6.28); ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#fff7d0'; ctx.beginPath(); ctx.arc(-s*0.45,-s*0.45,s*0.18,0,6.28); ctx.arc(s*0.45,-s*0.45,s*0.18,0,6.28); ctx.fill();
-    ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.45,-s*0.42,s*0.09,0,6.28); ctx.arc(s*0.45,-s*0.42,s*0.09,0,6.28); ctx.fill();
-    // wide mouth
-    ctx.lineWidth=s*0.07; ctx.beginPath(); ctx.arc(0,s*0.15,s*0.6,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
-    // gold sparkles
-    ctx.fillStyle='#fff7d0';
-    for(const [x,y] of [[s*0.8,-s*0.7],[-s*0.85,s*0.2],[s*0.2,s*0.7]]){
-      ctx.save(); ctx.translate(x,y); ctx.rotate(t*2);
-      ctx.beginPath(); for(let k=0;k<4;k++){const a=k*Math.PI/2; ctx.lineTo(Math.cos(a)*s*0.16,Math.sin(a)*s*0.16); ctx.lineTo(Math.cos(a+0.785)*s*0.05,Math.sin(a+0.785)*s*0.05);} ctx.closePath(); ctx.fill(); ctx.restore();
-    }
-    return;
-  }
-  if(type==='tank'){
-    // 독각귀: bulky one-horned brute
-    ctx.fillStyle=e.col;
-    ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
-    // single big horn
-    ctx.beginPath(); ctx.moveTo(-s*0.22,-s*0.82); ctx.lineTo(0,-s*1.6); ctx.lineTo(s*0.22,-s*0.82); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // heavy brow
-    ctx.lineWidth=s*0.12; ctx.beginPath(); ctx.moveTo(-s*0.5,-s*0.25); ctx.lineTo(-s*0.05,-s*0.12); ctx.moveTo(s*0.5,-s*0.25); ctx.lineTo(s*0.05,-s*0.12); ctx.stroke();
-    cxEyes(ctx,s,s*0.32,-s*0.02,s*0.2);
-    // fangs
-    ctx.fillStyle='#f3ead6'; ctx.beginPath();
-    ctx.moveTo(-s*0.18,s*0.3);ctx.lineTo(-s*0.1,s*0.55);ctx.lineTo(-s*0.26,s*0.35);ctx.closePath();
-    ctx.moveTo(s*0.18,s*0.3);ctx.lineTo(s*0.1,s*0.55);ctx.lineTo(s*0.26,s*0.35);ctx.closePath(); ctx.fill();
-    return;
-  }
-  if(type==='split'){
-    // 분열귀: cracked body that looks about to divide
-    ctx.fillStyle=e.col; ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
-    // small horns
-    ctx.beginPath();ctx.moveTo(-s*0.5,-s*0.7);ctx.lineTo(-s*0.65,-s*1.15);ctx.lineTo(-s*0.28,-s*0.85);ctx.closePath();
-    ctx.moveTo(s*0.5,-s*0.7);ctx.lineTo(s*0.65,-s*1.15);ctx.lineTo(s*0.28,-s*0.85);ctx.closePath();ctx.fill();ctx.stroke();
-    cxEyes(ctx,s,s*0.3,-s*0.08,s*0.2);
-    // jagged split seam
-    ctx.strokeStyle='#241c16'; ctx.lineWidth=s*0.08;
-    ctx.beginPath(); ctx.moveTo(0,-s*0.95); ctx.lineTo(-s*0.12,-s*0.4); ctx.lineTo(s*0.1,s*0.05); ctx.lineTo(-s*0.08,s*0.5); ctx.lineTo(s*0.05,s*0.95); ctx.stroke();
-    return;
-  }
-  if(type==='armor'){
-    // 갑주귀: armored helm + plated body
-    ctx.fillStyle=e.col; ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
-    // helmet dome
-    ctx.fillStyle='#9aa7b0'; ctx.beginPath(); ctx.arc(0,-s*0.15,s*0.95,Math.PI,0); ctx.lineTo(s*0.95,-s*0.05); ctx.lineTo(-s*0.95,-s*0.05); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // helm ridge + crest
-    ctx.fillStyle='#cdd6dd'; ctx.beginPath(); ctx.moveTo(0,-s*1.5); ctx.lineTo(-s*0.12,-s*0.9); ctx.lineTo(s*0.12,-s*0.9); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // eye slit
-    ctx.fillStyle='#241c16'; ctx.fillRect(-s*0.45,-s*0.18,s*0.3,s*0.12); ctx.fillRect(s*0.15,-s*0.18,s*0.3,s*0.12);
-    ctx.fillStyle='#ffd34d'; ctx.fillRect(-s*0.4,-s*0.15,s*0.12,s*0.06); ctx.fillRect(s*0.2,-s*0.15,s*0.12,s*0.06);
-    // chin plate
-    ctx.strokeStyle='#9aa7b0'; ctx.lineWidth=s*0.14; ctx.beginPath(); ctx.arc(0,s*0.1,s*0.7,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
-    return;
-  }
-  if(type==='swift'){
-    // 신속귀: sleek streamlined runner with speed lines
-    ctx.strokeStyle='#ffffffaa'; ctx.lineWidth=s*0.1;
-    for(let i=-1;i<2;i++){ ctx.beginPath(); ctx.moveTo(-s*1.9,i*s*0.45); ctx.lineTo(-s*1.0,i*s*0.45); ctx.stroke(); }
-    ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12);
-    ctx.fillStyle=e.col;
-    // teardrop body, pointed forward (+x)
-    ctx.beginPath(); ctx.moveTo(s*1.2,0); ctx.quadraticCurveTo(s*0.2,-s*0.95,-s*0.7,-s*0.5);
-    ctx.quadraticCurveTo(-s,0,-s*0.7,s*0.5); ctx.quadraticCurveTo(s*0.2,s*0.95,s*1.2,0); ctx.closePath(); ctx.fill(); ctx.stroke();
-    // swept-back horn
-    ctx.beginPath(); ctx.moveTo(-s*0.2,-s*0.55);ctx.lineTo(-s*0.95,-s*0.95);ctx.lineTo(-s*0.1,-s*0.3);ctx.closePath(); ctx.fill(); ctx.stroke();
-    cxEyes(ctx,s,s*0.18,-s*0.05,s*0.16);
-    return;
-  }
-  if(type==='heal'){
-    // 환쟁이: a sorcerer holding a glowing talisman/brush
-    ctx.fillStyle=e.col; ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
-    // little cap
-    ctx.fillStyle='#3a6a4a'; ctx.beginPath(); ctx.arc(0,-s*0.55,s*0.7,Math.PI,0); ctx.fill(); ctx.stroke();
-    cxEyes(ctx,s,s*0.3,-s*0.05,s*0.2);
-    // floating talisman with cross/charm
-    const by=s*0.1+Math.sin(t*3)*s*0.12;
-    ctx.fillStyle='#f3ead6'; ctx.strokeStyle='#c8442e'; ctx.lineWidth=s*0.06;
-    ctx.beginPath(); ctx.rect(s*0.9,by-s*0.4,s*0.5,s*0.8); ctx.fill(); ctx.stroke();
-    ctx.fillStyle='#c8442e'; ctx.fillRect(s*1.1,by-s*0.25,s*0.1,s*0.5); ctx.fillRect(s*0.98,by-s*0.08,s*0.34,s*0.1);
-    ctx.strokeStyle='#241c16';
-    return;
-  }
-  if(e.boss){
-    // 도깨비대왕: huge three-horned king with a crown
-    ctx.fillStyle=e.col; ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
-    // crown of three horns
-    ctx.fillStyle='#e0a82e';
-    ctx.beginPath();
-    ctx.moveTo(-s*0.55,-s*0.7); ctx.lineTo(-s*0.7,-s*1.5); ctx.lineTo(-s*0.3,-s*0.9); ctx.closePath();
-    ctx.moveTo(0,-s*0.85); ctx.lineTo(0,-s*1.75); ctx.lineTo(s*0.28,-s*0.9); ctx.closePath();
-    ctx.moveTo(s*0.55,-s*0.7); ctx.lineTo(s*0.7,-s*1.5); ctx.lineTo(s*0.3,-s*0.9); ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    // crown band
-    ctx.fillStyle='#c8442e'; ctx.beginPath(); ctx.roundRect(-s*0.65,-s*0.85,s*1.3,s*0.28,3); ctx.fill(); ctx.stroke();
-    // fierce glowing eyes + brows
-    ctx.lineWidth=s*0.1; ctx.beginPath(); ctx.moveTo(-s*0.55,-s*0.3);ctx.lineTo(-s*0.08,-s*0.12); ctx.moveTo(s*0.55,-s*0.3);ctx.lineTo(s*0.08,-s*0.12); ctx.stroke();
-    ctx.fillStyle='#ffd34d'; ctx.beginPath(); ctx.arc(-s*0.32,-s*0.05,s*0.2,0,6.28); ctx.arc(s*0.32,-s*0.05,s*0.2,0,6.28); ctx.fill();
-    ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.32,-s*0.02,s*0.09,0,6.28); ctx.arc(s*0.32,-s*0.02,s*0.09,0,6.28); ctx.fill();
-    // tusks
-    ctx.fillStyle='#f3ead6'; ctx.beginPath();
-    ctx.moveTo(-s*0.3,s*0.35);ctx.lineTo(-s*0.18,s*0.7);ctx.lineTo(-s*0.42,s*0.4);ctx.closePath();
-    ctx.moveTo(s*0.3,s*0.35);ctx.lineTo(s*0.18,s*0.7);ctx.lineTo(s*0.42,s*0.4);ctx.closePath(); ctx.fill(); ctx.stroke();
-    return;
-  }
-  // jab (default): plain little imp with two small horns
-  ctx.fillStyle=e.col; ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
-  ctx.beginPath();ctx.moveTo(-s*0.5,-s*0.7);ctx.lineTo(-s*0.7,-s*1.2);ctx.lineTo(-s*0.25,-s*0.85);ctx.closePath();
-  ctx.moveTo(s*0.5,-s*0.7);ctx.lineTo(s*0.7,-s*1.2);ctx.lineTo(s*0.25,-s*0.85);ctx.closePath();ctx.fill();ctx.stroke();
-  cxEyes(ctx,s,s*0.32,-s*0.08,s*0.22);
-  // small mouth
-  ctx.lineWidth=s*0.06; ctx.beginPath(); ctx.arc(0,s*0.35,s*0.2,0.15*Math.PI,0.85*Math.PI); ctx.stroke();
-}
-
-
-function statRow(lab,val,max,col,sqrtScale){
-  const pct=sqrtScale
-    ? Math.round(Math.sqrt(val/max)*100)
-    : Math.round(val/max*100);
-  return '<div class="row"><span class="lab">'+lab+'</span>'+
-    '<span class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></span>'+
-    '<span class="val">'+val+'</span></div>';
-}
-
 const grid=document.getElementById('grid');
-MONSTERS.forEach((m,i)=>{
-  const card=document.createElement('div'); card.className='card';
-  card.innerHTML=
-    '<div class="top"><span class="idx">'+(i+1)+'</span>'+
-      '<span class="nm">'+m.name+'<small>'+m.read+'</small></span>'+
-      '<span class="tier" style="background:'+m.tierCol+'">'+m.tier+'</span></div>'+
-    '<div class="portrait"><canvas width="220" height="150"></canvas><span class="play">▶ 눌러서 보기</span></div>'+
-    '<div class="desc">'+m.desc+'</div>'+
-    '<div class="traits">'+m.traits.map(t=>'<span class="trait">'+t+'</span>').join('')+'</div>'+
-    '<div class="stats">'+
-      statRow('체력', m.hp, MAXHP, '#c8442e', true)+
-      statRow('속도', m.spd, MAXSPD, '#2f6f8f')+
-      statRow('엽전', m.gold, MAXGOLD, '#e0a82e')+
-    '</div>';
-  grid.appendChild(card);
-  drawMonster(card.querySelector('canvas'), m);
-  card.onclick=()=>openPreview(m);
+const mx={hp:1400,spd:120,ar:12};
+MON.forEach((m,i)=>{
+  const el=document.createElement('div'); el.className='card';
+  const tc=TIERCOL[m.tier]||'#5b6b78';
+  el.innerHTML=
+   '<div class="top"><span class="idx">'+(i+1)+'</span><span class="nm">'+m.nm+'</span>'+
+     '<span class="tier" style="background:'+tc+'">'+m.tier+'</span></div>'+
+   '<div class="portrait"><img src="../assets/enemies/'+m.s+'/f0.png" alt="'+m.nm+'"></div>'+
+   '<div class="desc">'+m.d+'</div>'+
+   '<div class="stats">'+
+     '<div class="row"><span class="lab">체력</span><div class="bar"><i style="width:'+Math.min(100,m.hp/mx.hp*100)+'%;background:#c8442e"></i></div><span class="val">'+m.hp+'</span></div>'+
+     '<div class="row"><span class="lab">속도</span><div class="bar"><i style="width:'+(m.spd/mx.spd*100)+'%;background:#2f6f8f"></i></div><span class="val">'+m.spd+'</span></div>'+
+     '<div class="row"><span class="lab">방어</span><div class="bar"><i style="width:'+(m.ar/mx.ar*100)+'%;background:#5d7a4f"></i></div><span class="val">'+m.ar+'</span></div>'+
+   '</div>';
+  grid.appendChild(el);
 });
-
-// ---- preview: foe walks the lane showing its trait ----
-let anim=null;
-function openPreview(m){
-  const modal=document.getElementById('modal');
-  document.getElementById('mNm').innerHTML=m.name+' <small style="font-weight:400;opacity:.5;font-size:11px;letter-spacing:.15em">'+m.read+'</small>';
-  const tr=document.getElementById('mTier'); tr.textContent=m.tier; tr.style.background=m.tierCol;
-  document.getElementById('mDesc').textContent=m.desc;
-  modal.style.display='flex';
-  const cv=document.getElementById('mCanvas'), ctx=cv.getContext('2d');
-  const W=cv.width, H=cv.height, laneY=H*0.5;
-  let foes=[]; let spawnT=0; let parts=[]; let last=performance.now();
-  const baseR=Math.min(m.id==='boss'?28:20, m.r*0.55);
-  function spawn(){ foes.push({x:-30, sub:false, r:baseR, life:0}); }
-  function frame(now){
-    const dt=Math.min(0.05,(now-last)/1000); last=now;
-    ctx.clearRect(0,0,W,H);
-    // lane
-    ctx.strokeStyle='#c2a875'; ctx.lineWidth=34; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(10,laneY); ctx.lineTo(W-10,laneY); ctx.stroke();
-    ctx.setLineDash([4,16]); ctx.globalAlpha=.4; ctx.strokeStyle='#b3996a'; ctx.lineWidth=34;
-    ctx.beginPath(); ctx.moveTo(10,laneY); ctx.lineTo(W-10,laneY); ctx.stroke();
-    ctx.setLineDash([]); ctx.globalAlpha=1;
-    // start & gate markers
-    ctx.fillStyle='#2f6f8f'; ctx.beginPath(); ctx.arc(10,laneY,9,0,6.28); ctx.fill();
-    ctx.fillStyle='#7a3b22'; ctx.fillRect(W-22,laneY-18,16,36);
-    ctx.fillStyle='#c8442e'; ctx.fillRect(W-22,laneY-18,16,8);
-    // spawn pacing scaled to speed
-    spawnT-=dt; if(spawnT<=0){ spawn(); spawnT=1.6; }
-    const v=m.spd*0.7;
-    for(const f of foes){
-      f.x+=v*dt; f.life+=dt;
-      // gold sparkle pulse handled in draw
-      // split: when reaching mid, spawn two subs once
-      if(m.splits && !f.sub && !f.didSplit && f.x>W*0.55){
-        f.didSplit=true; f.gone=true;
-        for(let k=0;k<2;k++) foes.push({x:f.x, y:(k?12:-12), sub:true, r:baseR*0.7, life:0});
-      }
-    }
-    foes=foes.filter(f=>f.x<W+30 && !f.gone);
-    // draw
-    for(const f of foes){
-      const yy=laneY+(f.y||0);
-      drawMonster2(ctx,f.x,yy,f.r,m,f.life);
-    }
-    for(const p of parts){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; const a=1-p.t/p.life;
-      ctx.globalAlpha=Math.max(0,a); ctx.fillStyle=p.col; ctx.fillRect(p.x-2,p.y-2,4,4);} ctx.globalAlpha=1;
-    parts=parts.filter(p=>p.t<p.life);
-    anim=requestAnimationFrame(frame);
-  }
-  cancelAnimationFrame(anim); anim=requestAnimationFrame(frame);
-}
-// compact monster draw for preview with per-type accents
-function drawMonster2(ctx,cx,cy,s,m,life){
-  ctx.save(); ctx.translate(cx,cy);
-  const bob=Math.sin(life*8)*s*0.08; ctx.translate(0,bob);
-  if(m.regen){ ctx.save(); ctx.globalAlpha=.18; ctx.fillStyle='#7ec46a';
-    ctx.beginPath(); ctx.arc(0,0,s*1.45,0,6.28); ctx.fill(); ctx.restore(); }
-  ctx.fillStyle='#0003'; ctx.beginPath(); ctx.ellipse(0,s*0.95-bob,s*0.9,s*0.3,0,0,6.28); ctx.fill();
-  ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12); ctx.lineJoin='round';
-  const e={type:m.id,col:m.col,boss:m.id==='boss',regen:m.regen||0};
-  cxBody(ctx,e,s,m.id);
-  ctx.restore();
-}
-function closePreview(){ cancelAnimationFrame(anim); anim=null; document.getElementById('modal').style.display='none'; }
-document.getElementById('mClose').onclick=closePreview;
-document.getElementById('modal').onclick=(e)=>{ if(e.target.id==='modal') closePreview(); };
 </script>
 </body>
 </html>
