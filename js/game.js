@@ -4,7 +4,7 @@ const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 
 // ---------- sprite assets (CraftPix · Tower Defense 2D Game Kit) ----------
-const IMG={}, ESPRITE={}, UNIT={}; let FX_BURST=[]; let _imgPending=0;
+const IMG={}, ESPRITE={}, UNIT={}; let FX_BURST=[], FX_FIRE=[], FX_WATER=[]; let _imgPending=0;
 function _img(src){ const im=new Image(); _imgPending++;
   im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
 function loadAssets(){
@@ -24,6 +24,8 @@ function loadAssets(){
     boss:10,boss2:10,boss3:20,boss4:20};
   for(const k in EFRAMES){ ESPRITE[k]=[]; for(let i=0;i<EFRAMES[k];i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); }
   for(let i=0;i<12;i++) FX_BURST[i]=_img('assets/fx/burst/f'+i+'.png');
+  for(let i=0;i<8;i++)  FX_FIRE[i]=_img('assets/fx/fire/f'+i+'.png');
+  for(let i=0;i<12;i++) FX_WATER[i]=_img('assets/fx/water/f'+i+'.png');
 }
 function imgReady(im){ return im && im.complete && im.naturalWidth>0; }
 loadAssets();
@@ -655,33 +657,16 @@ function draw(){
   for(const p of G.particles) drawParticle(p);
   if(G.sel&&hover){ drawPlaceHint(); }
 }
-const ARROW_TOWERS={jangseung:1,kkachi:1,beom:1};
 function drawBullet(b){
   const def=b.def, id=b.tid, ang=Math.atan2(b.ty-b.sy,b.tx-b.sx);
   const R=CELL*0.10;
-  // 빙결탑 → 얼음 크리스탈 발사체
-  const ice=IMG.ice;
-  if(id==='seori' && imgReady(ice)){
-    const h=CELL*0.42, w=h*(ice.naturalWidth/ice.naturalHeight);
-    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
-    ctx.drawImage(ice,-w/2,-h/2,w,h); ctx.restore();
-    return;
-  }
-  // 비전 마법탑/포탑 → 화염구(마력탄·포탄)
-  const fb=IMG.fireball;
-  if((id==='arcane'||id==='cannon') && imgReady(fb)){
-    const h=CELL*(id==='cannon'?0.5:0.42), w=h*(fb.naturalWidth/fb.naturalHeight);
-    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
-    ctx.drawImage(fb,-w/2,-h/2,w,h); ctx.restore();
-    return;
-  }
-  // 물리 발사체 — 탑마다 모양이 다름: 궁수=긴 화살 / 석궁=짧고 굵은 볼트 / 병영=묵직한 큰 화살
-  const arrow=IMG.arrow;
-  if(ARROW_TOWERS[id] && imgReady(arrow)){
-    const h = id==='kkachi'? CELL*0.34 : id==='beom'? CELL*0.62 : CELL*0.5;
-    const w = h*(arrow.naturalWidth/arrow.naturalHeight) * (id==='kkachi'? 2.1 : id==='beom'? 1.4 : 1);
-    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
-    ctx.drawImage(arrow,-w/2,-h/2,w,h); ctx.restore();
+  // 활·근접 유닛(궁수·석궁·병영)은 공격 애니메이션이 발사를 표현 → 별도 발사체 미표시
+  if(id==='jangseung'||id==='kkachi'||id==='beom') return;
+  // 마법 발사체(벡터 애니): 빙결=물구슬 / 비전·포탑=불구슬
+  const anim = id==='seori'? FX_WATER : (id==='arcane'||id==='cannon')? FX_FIRE : null;
+  if(anim && anim.length){
+    const idx=Math.floor((b.t/Math.max(0.001,b.dur))*anim.length)%anim.length, im=anim[idx];
+    if(imgReady(im)){ const sz=CELL*(id==='cannon'?0.62:0.46); ctx.drawImage(im,b.x-sz/2,b.y-sz/2,sz,sz); }
     return;
   }
   ctx.save(); ctx.translate(b.x,b.y);
@@ -1146,9 +1131,9 @@ function drawTower(t){
   }
   ctx.save();ctx.translate(cx,cy);
   // 바닥 그림자 + 작은 돌 받침(캐릭터가 떠 보이지 않게)
-  ctx.fillStyle='#00000033'; ctx.beginPath(); ctx.ellipse(0,CELL*0.34,CELL*0.34,CELL*0.12,0,0,6.28); ctx.fill();
-  ctx.fillStyle='#6b6258'; ctx.beginPath(); ctx.ellipse(0,CELL*0.32,CELL*0.32,CELL*0.12,0,0,6.28); ctx.fill();
-  ctx.fillStyle='#837a6e'; ctx.beginPath(); ctx.ellipse(0,CELL*0.30,CELL*0.30,CELL*0.11,0,0,6.28); ctx.fill();
+  ctx.fillStyle='#00000033'; ctx.beginPath(); ctx.ellipse(0,CELL*0.28,CELL*0.27,CELL*0.10,0,0,6.28); ctx.fill();
+  ctx.fillStyle='#6b6258'; ctx.beginPath(); ctx.ellipse(0,CELL*0.26,CELL*0.25,CELL*0.09,0,0,6.28); ctx.fill();
+  ctx.fillStyle='#837a6e'; ctx.beginPath(); ctx.ellipse(0,CELL*0.24,CELL*0.23,CELL*0.085,0,0,6.28); ctx.fill();
   // ---- 애니메이션 방어 유닛 (건물 대신 캐릭터: 평상시 idle, 발사 시 attack) ----
   const U=UNIT[def.unit];
   if(U && U.idle.length){
@@ -1158,7 +1143,7 @@ function drawTower(t){
     else { frames=U.idle; idx=Math.floor(performance.now()/120 + (t.c*3+t.r))%frames.length; }
     const im=frames[idx];
     if(imgReady(im)){
-      const dh=CELL*2.4, dw=dh*(im.naturalWidth/im.naturalHeight);
+      const dh=CELL*1.75, dw=dh*(im.naturalWidth/im.naturalHeight);
       const flip=Math.cos(t.ang||0)>0;           // 적이 오른쪽이면 좌우 반전
       ctx.save(); if(flip) ctx.scale(-1,1);
       ctx.drawImage(im, -dw/2, -dh*0.66, dw, dh);
