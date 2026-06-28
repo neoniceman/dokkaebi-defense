@@ -1,3 +1,5 @@
 .DS_Store
 *.log
 .claude/
+craftpix-net-*/
+*.zip

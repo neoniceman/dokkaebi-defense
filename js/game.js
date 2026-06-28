@@ -3,6 +3,19 @@
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 
+// ---------- sprite assets (CraftPix · Tower Defense 2D Game Kit) ----------
+const IMG={}, ESPRITE={}; let _imgPending=0;
+function _img(src){ const im=new Image(); _imgPending++;
+  im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
+function loadAssets(){
+  for(let i=1;i<=4;i++) IMG['map'+i]=_img('assets/maps/map'+i+'.png');
+  ['archer','ballista','dark','frost','camp'].forEach(k=>IMG['t_'+k]=_img('assets/towers/'+k+'.png'));
+  ['goblin','brute','orc','imp','ogre','darkgob','king','bat','boss'].forEach(k=>{
+    ESPRITE[k]=[]; for(let i=0;i<10;i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); });
+}
+function imgReady(im){ return im && im.complete && im.naturalWidth>0; }
+loadAssets();
+
 // ---------- sound (Web Audio, synthesized — no files) + haptics ----------
 const SFX={ on:true };
 let _ac=null;
@@ -54,16 +67,16 @@ const toast=(m)=>{const t=$('toast');t.textContent=m;t.style.opacity=1;clearTime
 // ---------- meta progression (permanent, saved) ----------
 const META_UP={
   gold:{name:'두둑한 곳간', max:5, baseCost:8, step:1.6,
-    desc:l=>'시작 엽전 +'+(l*25)+' (현재 '+(120+l*25)+')',
+    desc:l=>'시작 금화 +'+(l*25)+' (현재 '+(120+l*25)+')',
     eff:l=>({startGold:l*25})},
   life:{name:'굳건한 성문', max:5, baseCost:10, step:1.7,
     desc:l=>'시작 생명 +'+(l*3)+' (현재 '+(20+l*3)+')',
     eff:l=>({startLife:l*3})},
   dmg:{name:'벼린 무기', max:5, baseCost:12, step:1.7,
-    desc:l=>'모든 수문장 피해 +'+(l*5)+'%',
+    desc:l=>'모든 방어탑 피해 +'+(l*5)+'%',
     eff:l=>({dmgMul:1+l*0.05})},
   coin:{name:'복을 부르는 부적', max:5, baseCost:10, step:1.6,
-    desc:l=>'런 종료 시 동전 +'+(l*15)+'%',
+    desc:l=>'런 종료 시 보석 +'+(l*15)+'%',
     eff:l=>({coinMul:1+l*0.15})},
 };
 const META_ORDER=['gold','life','dmg','coin'];
@@ -116,29 +129,21 @@ addEventListener('orientationchange',()=>setTimeout(resize,200));
 // Paths are long and winding so no single tower can cover the whole route —
 // placement choice (which stretch to guard) actually matters.
 const MAPS=[
-  { id:'gogae', name:'뱀고개',
-    // dense horizontal serpentine, 6 lanes
+  { id:'gogae', name:'마른 뼈 사막', bg:'map1',
     corners:[[0,1],[14,1],[14,3],[0,3],[0,5],[14,5],[14,7],[0,7],[0,9],[14,9]],
-    // 끝점이 아래쪽(row9) → 위로 솟은 2층 누각 숭례문
-    gate:{name:'숭례문', tiers:2, base:'#9a9184', roof:'#39414e', dc:'#b23a2c', arches:1, scale:1.05} },
-  { id:'sipja', name:'십자령',
-    // long staircase that fans across both halves
+    gate:{name:'왕성 정문', tiers:2, base:'#9a9184', roof:'#5a4a3a', dc:'#b23a2c', arches:1, scale:1.05} },
+  { id:'sipja', name:'수정 동굴', bg:'map2',
     corners:[[0,1],[4,1],[4,5],[8,5],[8,1],[12,1],[12,6],[14,6],[14,8],[2,8],[2,10],[14,10]],
-    gate:{name:'흥인지문', tiers:1, base:'#9a9184', roof:'#4b4f48', dc:'#2f7a5f', arches:1, scale:1.18} },
-  { id:'nagseon', name:'소용돌이',
-    // inward spiral wrapping the board
+    gate:{name:'수정 관문', tiers:1, base:'#9a9184', roof:'#3f6f7a', dc:'#2f7a5f', arches:1, scale:1.18} },
+  { id:'nagseon', name:'잿빛 협곡', bg:'map3',
     corners:[[0,1],[14,1],[14,9],[2,9],[2,3],[12,3],[12,7],[5,7],[5,5],[9,5]],
-    // 3홍예문의 웅장한 광화문
-    gate:{name:'광화문', tiers:1, base:'#8f877a', roof:'#2f3a48', dc:'#c8442e', arches:3, scale:1.12} },
-  { id:'eotgal', name:'엇갈림',
-    // offset zigzag with uneven lane lengths, spread across the board
+    gate:{name:'돌성문', tiers:1, base:'#8f877a', roof:'#3a3a42', dc:'#c8442e', arches:3, scale:1.12} },
+  { id:'eotgal', name:'폐허의 숲', bg:'map4',
     corners:[[0,2],[11,2],[11,5],[3,5],[3,8],[14,8],[14,10],[6,10],[6,6],[0,6]],
-    gate:{name:'돈의문', tiers:1, base:'#a59c8c', roof:'#46384f', dc:'#b23a2c', arches:1, scale:0.92} },
-  { id:'jangmun', name:'장문곡',
-    // vertical comb: repeated up-down teeth
+    gate:{name:'고대 성채', tiers:1, base:'#a59c8c', roof:'#4a5a3a', dc:'#5d7a4f', arches:1, scale:0.92} },
+  { id:'jangmun', name:'망자의 길', bg:'map3',
     corners:[[0,10],[2,10],[2,1],[5,1],[5,10],[8,10],[8,1],[11,1],[11,10],[14,10],[14,4]],
-    // 끝점이 위쪽(row4) → 키 작고 소박한 산성문 숙정문
-    gate:{name:'숙정문', tiers:1, base:'#7d756a', roof:'#5a4a3a', dc:'#8a6a3a', arches:1, scale:0.86} },
+    gate:{name:'망자의 문', tiers:1, base:'#7d756a', roof:'#3a3a42', dc:'#8a6a3a', arches:1, scale:0.86} },
 ];
 const REF_COLS=15, REF_ROWS=11;
 let curMap=MAPS[0];
@@ -176,15 +181,15 @@ function posAt(dist){
 
 // ---------- tower defs ----------
 const TOWERS={
-  jangseung:{name:'장승',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,
-    desc:'길목을 지키는 돌장승. 단일 대상 명중.'},
-  kkachi:{name:'까치',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,
-    desc:'빠른 연사. 약하지만 끊임없이 쫀다.'},
-  bul:{name:'불도깨비',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,
-    desc:'범위 화염. 뭉친 무리에 강하다.'},
-  seori:{name:'서리할멈',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,
+  jangseung:{name:'궁수탑',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',
+    desc:'길목을 지키는 궁수. 단일 대상 명중.'},
+  kkachi:{name:'석궁탑',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',
+    desc:'빠른 연사. 약하지만 끊임없이 쏜다.'},
+  bul:{name:'흑마법탑',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',
+    desc:'범위 화염 마법. 뭉친 무리에 강하다.'},
+  seori:{name:'빙결탑',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',
     desc:'적을 얼려 둔화. 피해는 적다.'},
-  beom:{name:'까치호랑이',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,
+  beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',
     desc:'일격필살의 대물. 느리지만 묵직하다.'},
 };
 const ORDER=['jangseung','kkachi','bul','seori','beom'];
@@ -269,16 +274,16 @@ function newGame(){
 // → 큰 화면에서 적이 겹쳐 나오거나, 골인 지점까지 못 가서 문이 안 깎이던 문제 해결.
 const SPD_REF=36;
 const ETYPES={
-  jab:{hp:34,spd:46,r:.30,col:'#6b5d8a',gold:6,name:'잡귀'},
-  fast:{hp:22,spd:82,r:.26,col:'#4f8a6b',gold:7,name:'그림자'},
-  tank:{hp:120,spd:30,r:.40,col:'#8a4f4f',gold:14,name:'독각귀'},
-  gold:{hp:50,spd:60,r:.32,col:'#e0a82e',gold:40,name:'금두꺼비'},
-  split:{hp:46,spd:50,r:.34,col:'#7a8a4f',gold:9,name:'분열귀',splits:true},
+  jab:{hp:34,spd:46,r:.30,col:'#6b5d8a',gold:6,name:'고블린',sprite:'goblin'},
+  fast:{hp:22,spd:82,r:.26,col:'#4f8a6b',gold:7,name:'그림자 박쥐',sprite:'bat'},
+  tank:{hp:120,spd:30,r:.40,col:'#8a4f4f',gold:14,name:'오우거',sprite:'ogre'},
+  gold:{hp:50,spd:60,r:.32,col:'#e0a82e',gold:40,name:'보물 임프',sprite:'imp'},
+  split:{hp:46,spd:50,r:.34,col:'#7a8a4f',gold:9,name:'분열 고블린',splits:true,sprite:'darkgob'},
   // ---- late-game ----
-  armor:{hp:140,spd:34,r:.40,col:'#5b6b78',gold:22,name:'갑주귀',armor:7},      // flat armor per hit → rewards high damage
-  swift:{hp:60,spd:120,r:.27,col:'#c25a8a',gold:20,name:'신속귀'},               // very fast → rewards rate/range
-  heal:{hp:90,spd:42,r:.36,col:'#5f9a6b',gold:18,name:'환쟁이',regen:14},        // self-heal → rewards burst/splash
-  boss:{hp:1400,spd:24,r:.62,col:'#7a2f55',gold:160,name:'도깨비대왕',armor:5,boss:true}, // huge HP wall
+  armor:{hp:140,spd:34,r:.40,col:'#5b6b78',gold:22,name:'중갑병',armor:7,sprite:'brute'},      // flat armor per hit → rewards high damage
+  swift:{hp:60,spd:120,r:.27,col:'#c25a8a',gold:20,name:'광전사 오크',sprite:'orc'},               // very fast → rewards rate/range
+  heal:{hp:90,spd:42,r:.36,col:'#5f9a6b',gold:18,name:'주술사',regen:14,sprite:'king'},        // self-heal → rewards burst/splash
+  boss:{hp:1400,spd:24,r:.62,col:'#7a2f55',gold:160,name:'마왕',armor:5,boss:true,sprite:'boss'}, // huge HP wall
 };
 // HP scaling per wave: 10웨이브까진 선형(초반 난이도 유지), 이후 준지수로 급상승.
 // 플레이어 화력이 카드/업글로 곱셈 성장하므로 적 체력도 후반엔 곱셈으로 따라붙어
@@ -310,6 +315,7 @@ function spawnEnemy(type){
     hp:base.hp*s, max:base.hp*s, spd:base.spd*(1+G.wave*0.018),
     r:base.r*CELL, col:base.col, gold:base.gold, name:base.name,
     splits:base.splits, armor:base.armor||0, regen:base.regen||0, boss:base.boss||false,
+    sprite:base.sprite, seed:Math.floor(Math.random()*10),
     slowT:0, slowF:1, ang:0, burn:0, burnT:0, burnDmg:0, mark:0});
 }
 
@@ -329,8 +335,8 @@ function syncTray(){
     const t=TOWERS[id];
     const b=document.createElement('div');
     b.className='twrbtn'+(t.unlocked?'':' locked')+(G&&G.sel===id?' sel':'');
-    b.innerHTML=towerSVG(id,38)+'<div class="nm">'+t.name+'</div><div class="cost">'+(t.unlocked?('엽전 '+t.cost):'잠김')+'</div>';
-    b.onclick=()=>{ if(!t.unlocked){toast('아직 잠긴 수문장');return;}
+    b.innerHTML=towerSVG(id,38)+'<div class="nm">'+t.name+'</div><div class="cost">'+(t.unlocked?('금화 '+t.cost):'잠김')+'</div>';
+    b.onclick=()=>{ if(!t.unlocked){toast('아직 잠긴 방어탑');return;}
       G.sel=(G.sel===id?null:id); closePanel(); syncTray(); };
     tray.appendChild(b);
   });
@@ -348,7 +354,7 @@ function placeAt(px,py){
   if(BLOCKED.has(key(c,r))){toast('길 위엔 못 세운다');return;}
   if(existing){toast('이미 자리 있음');return;}
   const def=TOWERS[G.sel];
-  if(G.gold<def.cost){toast('엽전이 부족하다');return;}
+  if(G.gold<def.cost){toast('금화이 부족하다');return;}
   G.gold-=def.cost;
   G.towers.push({id:G.sel,c,r,...cellCenter(c,r),cd:0,ang:0,up:{dmg:0,rate:0,range:0,splash:0},branch:null});
   SND.place();
@@ -456,7 +462,7 @@ function killEnemy(e,opts){
   SND.kill(e.boss);
   // floating coin number
   G.particles.push({x:e.x,y:e.y-e.r,vx:0,vy:-40,t:0,life:0.8,col:'#e0a82e',shape:'coin',txt:'+'+g});
-  if(e.boss) toast('도깨비대왕 처치! +'+g);
+  if(e.boss) toast('마왕 처치! +'+g);
   // 포효: roar deals splash damage to nearby on kill
   if(opts.roar){
     const R=CELL*1.4;
@@ -563,13 +569,13 @@ function endWave(){
   showCards();
 }
 const CARDPOOL=[
-  {t:'예리한 부적',d:'모든 수문장 피해 +10%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.10},
-  {t:'바람 신발',d:'모든 수문장 공격속도 +8%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.08},
-  {t:'천리안',d:'모든 수문장 사거리 +8%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.08},
-  {t:'엽전 주머니',d:'처치 보상 +15%, 엽전 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.15;G.gold+=40;}},
+  {t:'예리한 부적',d:'모든 방어탑 피해 +10%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.10},
+  {t:'바람 신발',d:'모든 방어탑 공격속도 +8%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.08},
+  {t:'천리안',d:'모든 방어탑 사거리 +8%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.08},
+  {t:'금화 주머니',d:'처치 보상 +15%, 금화 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.15;G.gold+=40;}},
   {t:'성벽 보수',d:'성문 생명 +6 회복',tag:'수호',rare:0,svg:'life',act:()=>{G.life+=6;}},
 ];
-function unlockCard(id){const t=TOWERS[id];return {t:t.name+' 해금',d:t.desc,tag:'수문장',rare:1,svg:id,act:()=>{t.unlocked=true;syncTray();}};}
+function unlockCard(id){const t=TOWERS[id];return {t:t.name+' 해금',d:t.desc,tag:'방어탑',rare:1,svg:id,act:()=>{t.unlocked=true;syncTray();}};}
 function showCards(){
   closePanel();
   const choices=[];
@@ -672,17 +678,23 @@ function drawParticle(p){
   ctx.globalAlpha=1;
 }
 function drawGround(){
-  // subtle tatami/han-ji grid
-  ctx.strokeStyle='#00000010'; ctx.lineWidth=1;
-  for(let c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(OX+c*CELL,OY);ctx.lineTo(OX+c*CELL,OY+ROWS*CELL);ctx.stroke();}
-  for(let r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(OX,OY+r*CELL);ctx.lineTo(OX+COLS*CELL,OY+r*CELL);ctx.stroke();}
+  // illustrated map background (cover-fit, fills the stage)
+  const im=IMG[(curMap&&curMap.bg)||'map1'];
+  if(imgReady(im)){
+    const ir=im.naturalWidth/im.naturalHeight, sr=W/H;
+    let dw,dh; if(sr>ir){ dw=W; dh=W/ir; } else { dh=H; dw=H*ir; }
+    ctx.drawImage(im,(W-dw)/2,(H-dh)/2,dw,dh);
+  } else {
+    ctx.fillStyle='#e3d6ba'; ctx.fillRect(0,0,W,H);
+  }
 }
 function drawPath(){
   ctx.lineCap='round'; ctx.lineJoin='round';
-  ctx.strokeStyle='#cdb78e'; ctx.lineWidth=CELL*0.82;
-  strokePath();
-  ctx.strokeStyle='#b89e6e'; ctx.lineWidth=CELL*0.82; ctx.setLineDash([CELL*0.06,CELL*0.22]);
-  ctx.globalAlpha=.5; strokePath(); ctx.globalAlpha=1; ctx.setLineDash([]);
+  // worn lane over the illustrated map — translucent so the art shows through
+  ctx.globalAlpha=.28; ctx.strokeStyle='#3a2a18'; ctx.lineWidth=CELL*0.78;
+  strokePath(); ctx.globalAlpha=1;
+  ctx.globalAlpha=.5; ctx.strokeStyle='#e8d9b5'; ctx.lineWidth=CELL*0.5; ctx.setLineDash([CELL*0.05,CELL*0.28]);
+  strokePath(); ctx.globalAlpha=1; ctx.setLineDash([]);
   // gate at end — 성문(광화문풍): 석축 + 홍예문 + 단청 문루 + 기와지붕
   drawGate(WP[WP.length-1]);
   // 출발지: 잡귀가 기어나오는 도깨비굴
@@ -862,8 +874,16 @@ function drawEnemy(e){
     ctx.beginPath();ctx.arc(0,0,s*1.5,0,6.28);ctx.fill(); ctx.globalAlpha=1; }
   // shadow
   ctx.fillStyle='#0003'; ctx.beginPath();ctx.ellipse(0,s*0.9,s*0.9,s*0.32,0,0,6.28);ctx.fill();
-  ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12); ctx.lineJoin='round';
-  drawEnemyBody(e,s,type);
+  // walking sprite frame, flipped to face travel direction
+  const fr=ESPRITE[e.sprite]; const im=fr && fr[Math.floor(performance.now()/90 + (e.seed||0))%10];
+  if(imgReady(im)){
+    const h=s*3.4, w=h*(im.naturalWidth/im.naturalHeight);
+    ctx.save(); if(Math.cos(e.ang)<0) ctx.scale(-1,1);
+    ctx.drawImage(im, -w/2, -h*0.66, w, h); ctx.restore();
+  } else {
+    ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12); ctx.lineJoin='round';
+    drawEnemyBody(e,s,type);
+  }
   // ---- shared status overlays ----
   if(e.slowT>0){ctx.globalAlpha=.4;ctx.fillStyle='#bfe3f0';ctx.beginPath();ctx.arc(0,0,s,0,6.28);ctx.fill();ctx.globalAlpha=1;}
   if(e.burn>0){ctx.globalAlpha=.35+Math.random()*0.2;ctx.fillStyle='#e0612e';
@@ -1051,7 +1071,11 @@ function drawTower(t){
   }
   ctx.save();ctx.translate(cx,cy);
   ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(0,s*0.95,s*0.85,s*0.3,0,0,6.28);ctx.fill();
-  drawTowerBody(t,def,s,headScale);
+  const tim=IMG[def.sprite];
+  if(imgReady(tim)){
+    const h=CELL*1.6, w=h*(tim.naturalWidth/tim.naturalHeight);
+    ctx.drawImage(tim, -w/2, -h*0.74, w, h);
+  } else drawTowerBody(t,def,s,headScale);
   // branch rune above head — marks a tower that chose a path
   if(t.branch){
     const ry=-s*1.05;
@@ -1232,7 +1256,7 @@ function cardSVG(k){
 function updateHUD(){
   $('hWave').textContent=G.wave; $('hGold').textContent=Math.floor(G.gold);
   $('hLife').textContent=Math.max(0,G.life); $('hBest').textContent=G.best;
-  const tt=$('title'); if(tt&&curMap) tt.innerHTML='도깨비 수문장<small>'+curMap.name+'</small>';
+  const tt=$('title'); if(tt&&curMap) tt.innerHTML='성채 수호전<small>'+curMap.name+'</small>';
 }
 
 // ---------- upgrade panel ----------
@@ -1293,7 +1317,7 @@ function renderPanel(){
 function chooseBranch(brId){
   const t=G.panelT; if(!t||t.branch)return;
   const cost=branchCost(t);
-  if(G.gold<cost){toast('엽전이 부족하다');return;}
+  if(G.gold<cost){toast('금화이 부족하다');return;}
   G.gold-=cost; t.branch=brId; updateHUD(); renderPanel();
   spawnBranchFx(t.x,t.y,TOWERS[t.id].col);
   SND.branch();
@@ -1303,7 +1327,7 @@ function chooseBranch(brId){
 function doUpgrade(stat){
   const t=G.panelT; if(!t)return;
   const cost=stepCost(t,stat);
-  if(cost==null)return; if(G.gold<cost){toast('엽전이 부족하다');return;}
+  if(cost==null)return; if(G.gold<cost){toast('금화이 부족하다');return;}
   if(!t.up)t.up={}; t.up[stat]=(t.up[stat]||0)+1;
   G.gold-=cost; updateHUD(); renderPanel();
   spawnUpgrade(t.x,t.y);
@@ -1336,7 +1360,7 @@ $('cmClose').onclick=()=>{ $('codexMenu').style.display='none'; };
 $('codexMenu').onclick=(e)=>{ if(e.target.id==='codexMenu') $('codexMenu').style.display='none'; };
 
 // ---------- in-game codex viewer (iframe) ----------
-const CODEX_TITLE={ maps:'맵 일람', monsters:'몬스터 도감', towers:'수문장 도감' };
+const CODEX_TITLE={ maps:'전장 일람', monsters:'마물 도감', towers:'방어탑 도감' };
 function openCodexView(kind){
   const title=CODEX_TITLE[kind]; if(!title)return;
   $('codexMenu').style.display='none';
@@ -1378,7 +1402,7 @@ function renderShrine(){
 }
 function buyMeta(k){
   const cost=metaCost(k); if(cost==null)return;
-  if(META.coins<cost){ toast('동전이 부족하다'); return; }
+  if(META.coins<cost){ toast('보석이 부족하다'); return; }
   META.coins-=cost; META.up[k]=(META.up[k]||0)+1; metaSave(META);
   renderShrine(); refreshMenu();
 }
@@ -1422,11 +1446,11 @@ function gameOver(){
   const ov=$('overlay');
   ov.innerHTML='<h1>성문이 뚫렸다</h1>'+
     '<div class="big">물결 '+G.wave+'까지 버텼다 · 최고 '+G.best+'</div>'+
-    '<div class="sub">잡귀가 고개를 넘었다.<br>도깨비 동전 <b style="color:#e0a82e">🪙 '+earned+'</b>을 모았다.</div>'+
+    '<div class="sub">마물이 성문을 넘었다.<br>보석 <b style="color:#e0a82e">🪙 '+earned+'</b>을 모았다.</div>'+
     '<button class="btn" id="againBtn">다시 문을 연다</button>'+
     '<div id="menuRow">'+
       '<button class="menubtn" id="overlayCodex">📖 도감</button>'+
-      '<button class="menubtn" id="shrineBtn">🏯 도깨비 사당</button>'+
+      '<button class="menubtn" id="shrineBtn">🏯 마법 제단</button>'+
     '</div>';
   ov.style.display='flex';
   $('againBtn').onclick=()=>{ ov.style.display='none'; newGame(); startWave(); };
