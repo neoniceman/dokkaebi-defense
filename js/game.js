@@ -668,15 +668,66 @@ function drawPath(){
   strokePath();
   ctx.strokeStyle='#b89e6e'; ctx.lineWidth=CELL*0.82; ctx.setLineDash([CELL*0.06,CELL*0.22]);
   ctx.globalAlpha=.5; strokePath(); ctx.globalAlpha=1; ctx.setLineDash([]);
-  // gate at end
-  const g=WP[WP.length-1];
-  ctx.fillStyle='#7a3b22'; ctx.fillRect(g.x-CELL*0.4,g.y-CELL*0.45,CELL*0.8,CELL*0.9);
-  ctx.fillStyle='#c8442e'; ctx.fillRect(g.x-CELL*0.4,g.y-CELL*0.45,CELL*0.8,CELL*0.14);
+  // gate at end — 성문(광화문풍): 석축 + 홍예문 + 단청 문루 + 기와지붕
+  drawGate(WP[WP.length-1]);
   // start banner
   const s=WP[0];
   ctx.fillStyle='#2f6f8f'; ctx.beginPath();ctx.arc(s.x,s.y,CELL*0.18,0,6.28);ctx.fill();
 }
 function strokePath(){ctx.beginPath();ctx.moveTo(WP[0].x,WP[0].y);for(let i=1;i<WP.length;i++)ctx.lineTo(WP[i].x,WP[i].y);ctx.stroke();}
+// 성문(광화문풍) 골인 지점: 석축 위에 단청 문루와 치켜 올라간 기와지붕
+function drawGate(g){
+  const u=CELL, cx=g.x, cy=g.y;
+  ctx.save(); ctx.lineJoin='round'; ctx.lineCap='round';
+  // ----- 석축 (stone base wall) -----
+  const baseT=cy-u*0.16, baseB=cy+u*0.52, twH=u*0.44, bwH=u*0.52;
+  ctx.beginPath();
+  ctx.moveTo(cx-bwH,baseB); ctx.lineTo(cx-twH,baseT);
+  ctx.lineTo(cx+twH,baseT); ctx.lineTo(cx+bwH,baseB); ctx.closePath();
+  ctx.fillStyle='#9a9184'; ctx.fill();
+  ctx.strokeStyle='#4a4036'; ctx.lineWidth=Math.max(1,u*0.03); ctx.stroke();
+  ctx.strokeStyle='#00000022'; ctx.lineWidth=1;                  // 돌 줄눈
+  for(let i=1;i<3;i++){const y=baseT+(baseB-baseT)*i/3;
+    ctx.beginPath(); ctx.moveTo(cx-bwH*(0.82+0.06*i),y); ctx.lineTo(cx+bwH*(0.82+0.06*i),y); ctx.stroke();}
+  // ----- 홍예문 (arched gateway, dark passage) -----
+  const ow=u*0.17, archTop=cy+u*0.04;
+  ctx.fillStyle='#15110d';
+  ctx.beginPath();
+  ctx.moveTo(cx-ow,baseB); ctx.lineTo(cx-ow,archTop);
+  ctx.arc(cx,archTop,ow,Math.PI,0); ctx.lineTo(cx+ow,baseB); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#cdbf9e'; ctx.lineWidth=Math.max(1.5,u*0.035); // 무지개 돌테
+  ctx.beginPath(); ctx.arc(cx,archTop,ow+u*0.02,Math.PI,0); ctx.stroke();
+  // ----- 문루 나무벽 + 단청 (wooden gate-tower wall) -----
+  const wallB=baseT, wallT=cy-u*0.34, wallHW=u*0.40;
+  ctx.fillStyle='#6e4628'; ctx.fillRect(cx-wallHW,wallT,wallHW*2,wallB-wallT);
+  ctx.strokeStyle='#3f2614'; ctx.lineWidth=Math.max(1,u*0.02);
+  ctx.strokeRect(cx-wallHW,wallT,wallHW*2,wallB-wallT);
+  for(let i=-1;i<=1;i++){const x=cx+i*wallHW*0.66;                // 기둥
+    ctx.beginPath(); ctx.moveTo(x,wallT); ctx.lineTo(x,wallB); ctx.stroke();}
+  const dcY=wallT, dcH=u*0.07;                                    // 단청 띠
+  ctx.fillStyle='#b23a2c'; ctx.fillRect(cx-wallHW,dcY,wallHW*2,dcH);
+  ctx.fillStyle='#2f7a5f';
+  for(let x=cx-wallHW+u*0.03;x<cx+wallHW-u*0.02;x+=u*0.1) ctx.fillRect(x,dcY+dcH*0.25,u*0.035,dcH*0.5);
+  // ----- 기와지붕 (curved tiled roof, 처마가 치켜 올라감) -----
+  const RW=u*0.62, ey=cy-u*0.34, ty=cy-u*0.72, RHW=RW*0.30;
+  ctx.beginPath();
+  ctx.moveTo(cx-RW, ey-u*0.05);
+  ctx.quadraticCurveTo(cx, ey+u*0.10, cx+RW, ey-u*0.05);         // 늘어진 처마선
+  ctx.quadraticCurveTo(cx+RW*0.55, ty+u*0.05, cx+RHW, ty);       // 오른 지붕면
+  ctx.lineTo(cx-RHW, ty);                                        // 용마루
+  ctx.quadraticCurveTo(cx-RW*0.55, ty+u*0.05, cx-RW, ey-u*0.05); // 왼 지붕면
+  ctx.closePath();
+  ctx.fillStyle='#39414e'; ctx.fill();
+  ctx.strokeStyle='#20252e'; ctx.lineWidth=Math.max(1,u*0.03); ctx.stroke();
+  ctx.strokeStyle='#5a6573'; ctx.lineWidth=Math.max(1,u*0.025);  // 처마 기와줄
+  ctx.beginPath(); ctx.moveTo(cx-RW,ey-u*0.05); ctx.quadraticCurveTo(cx,ey+u*0.10,cx+RW,ey-u*0.05); ctx.stroke();
+  ctx.strokeStyle='#aeb6c0'; ctx.lineWidth=Math.max(1.5,u*0.04); // 용마루 마루기와
+  ctx.beginPath(); ctx.moveTo(cx-RHW,ty); ctx.lineTo(cx+RHW,ty); ctx.stroke();
+  ctx.fillStyle='#20252e';                                       // 치미(양끝 장식)
+  ctx.beginPath(); ctx.arc(cx-RHW,ty,u*0.045,0,6.28); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+RHW,ty,u*0.045,0,6.28); ctx.fill();
+  ctx.restore();
+}
 
 function drawPlaceHint(){
   const c=Math.floor((hover.x-OX)/CELL), r=Math.floor((hover.y-OY)/CELL);
