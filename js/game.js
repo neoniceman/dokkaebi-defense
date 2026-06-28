@@ -677,11 +677,67 @@ function drawPath(){
   ctx.globalAlpha=.5; strokePath(); ctx.globalAlpha=1; ctx.setLineDash([]);
   // gate at end — 성문(광화문풍): 석축 + 홍예문 + 단청 문루 + 기와지붕
   drawGate(WP[WP.length-1]);
-  // start banner
-  const s=WP[0];
-  ctx.fillStyle='#2f6f8f'; ctx.beginPath();ctx.arc(s.x,s.y,CELL*0.18,0,6.28);ctx.fill();
+  // 출발지: 잡귀가 기어나오는 도깨비굴
+  drawSpawn(WP[0]);
 }
 function strokePath(){ctx.beginPath();ctx.moveTo(WP[0].x,WP[0].y);for(let i=1;i<WP.length;i++)ctx.lineTo(WP[i].x,WP[i].y);ctx.stroke();}
+// 출발지: 도깨비굴(귀문) — 어두운 바위굴 입구 + 맥동하는 포털 빛 + 떠다니는 도깨비불
+function drawSpawn(s){
+  const u=CELL, cx=s.x, cy=s.y, T=performance.now()/1000;
+  const pulse=0.5+0.5*Math.sin(T*2.2);          // 0~1 맥동
+  ctx.save();
+  // 바닥 그림자
+  ctx.fillStyle='#00000028';
+  ctx.beginPath(); ctx.ellipse(cx,cy+u*0.42,u*0.6,u*0.2,0,0,6.28); ctx.fill();
+  // 으스스한 외곽 광채 (보라/청록)
+  const halo=ctx.createRadialGradient(cx,cy,u*0.1,cx,cy,u*0.85);
+  halo.addColorStop(0,'rgba(95,200,170,'+(0.30+pulse*0.22)+')');
+  halo.addColorStop(0.5,'rgba(80,120,160,0.12)');
+  halo.addColorStop(1,'rgba(80,120,160,0)');
+  ctx.fillStyle=halo; ctx.beginPath(); ctx.arc(cx,cy,u*0.85,0,6.28); ctx.fill();
+  // 바위 둔덕
+  ctx.fillStyle='#332b38'; ctx.strokeStyle='#1d1726'; ctx.lineWidth=Math.max(1,u*0.03);
+  ctx.beginPath();
+  ctx.moveTo(cx-u*0.52,cy+u*0.38);
+  ctx.quadraticCurveTo(cx-u*0.6,cy-u*0.5, cx,cy-u*0.56);
+  ctx.quadraticCurveTo(cx+u*0.6,cy-u*0.5, cx+u*0.52,cy+u*0.38);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  // 바위 균열/질감
+  ctx.strokeStyle='#00000033'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx-u*0.3,cy-u*0.1); ctx.lineTo(cx-u*0.42,cy+u*0.3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+u*0.28,cy-u*0.18); ctx.lineTo(cx+u*0.4,cy+u*0.2); ctx.stroke();
+  // 동굴 입구(아치)
+  const mw=u*0.28, mTop=cy-u*0.12, mBot=cy+u*0.36;
+  ctx.beginPath();
+  ctx.moveTo(cx-mw,mBot); ctx.lineTo(cx-mw,mTop);
+  ctx.arc(cx,mTop,mw,Math.PI,0); ctx.lineTo(cx+mw,mBot); ctx.closePath();
+  // 입구 안쪽: 맥동하는 포털 빛 (안으로 갈수록 어두움)
+  const portal=ctx.createRadialGradient(cx,cy+u*0.1,u*0.02,cx,cy+u*0.1,mw*1.6);
+  portal.addColorStop(0,'rgba(120,230,200,'+(0.65+pulse*0.3)+')');
+  portal.addColorStop(0.45,'rgba(70,150,150,0.5)');
+  portal.addColorStop(1,'#0a0710');
+  ctx.fillStyle=portal; ctx.fill();
+  ctx.strokeStyle='#15101c'; ctx.lineWidth=Math.max(1.5,u*0.04);
+  ctx.beginPath();
+  ctx.moveTo(cx-mw,mBot); ctx.lineTo(cx-mw,mTop);
+  ctx.arc(cx,mTop,mw,Math.PI,0); ctx.lineTo(cx+mw,mBot); ctx.stroke();
+  // 떠다니는 도깨비불 3개
+  for(let i=0;i<3;i++){
+    const ph=T*1.4+i*2.1;
+    const fx=cx+Math.cos(ph)*u*(0.34+0.08*Math.sin(T*1.7+i));
+    const fy=cy-u*0.18+Math.sin(ph*0.9)*u*0.24;
+    const fr=u*(0.06+0.02*Math.sin(T*5+i*2));     // 깜빡이는 크기
+    const fl=0.6+0.4*Math.sin(T*4+i*1.7);
+    const g=ctx.createRadialGradient(fx,fy,0,fx,fy,fr*2.6);
+    g.addColorStop(0,'rgba(225,255,245,'+(0.9*fl)+')');
+    g.addColorStop(0.4,'rgba(110,230,190,'+(0.6*fl)+')');
+    g.addColorStop(1,'rgba(70,180,150,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(fx,fy,fr*2.6,0,6.28); ctx.fill();
+    ctx.fillStyle='rgba(240,255,250,'+(0.9*fl)+')';
+    ctx.beginPath(); ctx.arc(fx,fy,fr*0.5,0,6.28); ctx.fill();
+  }
+  ctx.restore();
+}
 // 성문(광화문풍) 골인 지점: 석축 위에 단청 문루와 치켜 올라간 기와지붕
 function drawGate(g){
   const u=CELL, cx=g.x, cy=g.y;
