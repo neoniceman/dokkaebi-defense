@@ -10,6 +10,7 @@ function _img(src){ const im=new Image(); _imgPending++;
 function loadAssets(){
   for(let i=1;i<=4;i++) IMG['map'+i]=_img('assets/maps/map'+i+'.png');
   ['archer','ballista','dark','frost','camp'].forEach(k=>IMG['t_'+k]=_img('assets/towers/'+k+'.png'));
+  IMG.arrow=_img('assets/fx/arrow.png');
   ['goblin','brute','orc','imp','ogre','darkgob','king','bat','boss'].forEach(k=>{
     ESPRITE[k]=[]; for(let i=0;i<10;i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); });
 }
@@ -612,9 +613,18 @@ function draw(){
   for(const p of G.particles) drawParticle(p);
   if(G.sel&&hover){ drawPlaceHint(); }
 }
+const ARROW_TOWERS={jangseung:1,kkachi:1,beom:1};
 function drawBullet(b){
   const def=b.def, id=b.tid, ang=Math.atan2(b.ty-b.sy,b.tx-b.sx);
   const R=CELL*0.10;
+  // 물리 발사체(궁수·석궁·병영)는 실제 화살 스프라이트로
+  const arrow=IMG.arrow;
+  if(ARROW_TOWERS[id] && imgReady(arrow)){
+    const h=CELL*0.5, w=h*(arrow.naturalWidth/arrow.naturalHeight);
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
+    ctx.drawImage(arrow,-w/2,-h/2,w,h); ctx.restore();
+    return;
+  }
   ctx.save(); ctx.translate(b.x,b.y);
   if(id==='kkachi'){            // 까치: swift feather-dart with motion streak
     ctx.rotate(ang);
@@ -1073,8 +1083,8 @@ function drawTower(t){
   ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(0,s*0.95,s*0.85,s*0.3,0,0,6.28);ctx.fill();
   const tim=IMG[def.sprite];
   if(imgReady(tim)){
-    const h=CELL*1.6, w=h*(tim.naturalWidth/tim.naturalHeight);
-    ctx.drawImage(tim, -w/2, -h*0.74, w, h);
+    const h=CELL*1.12, w=h*(tim.naturalWidth/tim.naturalHeight);
+    ctx.drawImage(tim, -w/2, -h*0.68, w, h);
   } else drawTowerBody(t,def,s,headScale);
   // branch rune above head — marks a tower that chose a path
   if(t.branch){
