@@ -13,6 +13,8 @@ function loadAssets(){
   IMG.arrow=_img('assets/fx/arrow.png');
   IMG.ice=_img('assets/fx/ice.png');
   IMG.fireball=_img('assets/fx/fireball.png');
+  IMG.u_archer=_img('assets/units/archer.png');
+  IMG.u_knight=_img('assets/units/knight.png');
   ['goblin','brute','orc','imp','ogre','darkgob','king','bat','boss'].forEach(k=>{
     ESPRITE[k]=[]; for(let i=0;i<10;i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); });
 }
@@ -184,15 +186,15 @@ function posAt(dist){
 
 // ---------- tower defs ----------
 const TOWERS={
-  jangseung:{name:'궁수탑',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',
+  jangseung:{name:'궁수탑',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',unit:'u_archer',
     desc:'길목을 지키는 궁수. 단일 대상 명중.'},
-  kkachi:{name:'석궁탑',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',
+  kkachi:{name:'석궁탑',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',unit:'u_knight',
     desc:'빠른 연사. 약하지만 끊임없이 쏜다.'},
   bul:{name:'흑마법탑',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',
     desc:'범위 화염 마법. 뭉친 무리에 강하다.'},
   seori:{name:'빙결탑',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',
     desc:'적을 얼려 둔화. 피해는 적다.'},
-  beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',
+  beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'u_knight',
     desc:'일격필살의 대물. 느리지만 묵직하다.'},
 };
 const ORDER=['jangseung','kkachi','bul','seori','beom'];
@@ -1096,6 +1098,16 @@ function drawTower(t){
   if(imgReady(tim)){
     const h=CELL*1.12, w=h*(tim.naturalWidth/tim.naturalHeight);
     ctx.drawImage(tim, -w/2, -h*0.68, w, h);
+    // 타워 위에 사수(인간형 유닛) 합성 — 목표 방향을 바라봄
+    const uim=IMG[def.unit];
+    if(uim && imgReady(uim)){
+      const uh=CELL*0.62, uw=uh*(uim.naturalWidth/uim.naturalHeight);
+      ctx.save();
+      ctx.translate(0,-CELL*0.52);                 // 타워 상단 플랫폼 위로
+      if(Math.cos(t.ang||0)>0) ctx.scale(-1,1);    // 적이 오른쪽이면 좌우 반전
+      ctx.drawImage(uim, -uw/2, -uh*0.7, uw, uh);
+      ctx.restore();
+    }
   } else drawTowerBody(t,def,s,headScale);
   // branch rune above head — marks a tower that chose a path
   if(t.branch){
