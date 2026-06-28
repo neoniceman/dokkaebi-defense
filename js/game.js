@@ -4,7 +4,7 @@ const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 
 // ---------- sprite assets (CraftPix · Tower Defense 2D Game Kit) ----------
-const IMG={}, ESPRITE={}; let _imgPending=0;
+const IMG={}, ESPRITE={}; let FX_BURST=[]; let _imgPending=0;
 function _img(src){ const im=new Image(); _imgPending++;
   im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
 function loadAssets(){
@@ -15,8 +15,10 @@ function loadAssets(){
   IMG.fireball=_img('assets/fx/fireball.png');
   IMG.u_archer=_img('assets/units/archer.png');
   IMG.u_knight=_img('assets/units/knight.png');
-  ['goblin','brute','orc','imp','ogre','darkgob','king','bat','boss'].forEach(k=>{
-    ESPRITE[k]=[]; for(let i=0;i<10;i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); });
+  const EFRAMES={goblin:10,brute:10,orc:10,imp:10,ogre:10,darkgob:10,king:10,bat:10,yeti:10,axer:10,
+    boss:10,boss2:10,boss3:20,boss4:20};
+  for(const k in EFRAMES){ ESPRITE[k]=[]; for(let i=0;i<EFRAMES[k];i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); }
+  for(let i=0;i<12;i++) FX_BURST[i]=_img('assets/fx/burst/f'+i+'.png');
 }
 function imgReady(im){ return im && im.complete && im.naturalWidth>0; }
 loadAssets();
@@ -288,6 +290,8 @@ const ETYPES={
   armor:{hp:140,spd:34,r:.40,col:'#5b6b78',gold:22,name:'중갑병',armor:7,sprite:'brute'},      // flat armor per hit → rewards high damage
   swift:{hp:60,spd:120,r:.27,col:'#c25a8a',gold:20,name:'광전사 오크',sprite:'orc'},               // very fast → rewards rate/range
   heal:{hp:90,spd:42,r:.36,col:'#5f9a6b',gold:18,name:'주술사',regen:14,sprite:'king'},        // self-heal → rewards burst/splash
+  yeti:{hp:130,spd:70,r:.38,col:'#b9c0c4',gold:18,name:'설인',regen:10,sprite:'yeti'},          // 빠르고 자가회복하는 거구
+  axer:{hp:240,spd:34,r:.42,col:'#3f7a8a',gold:30,name:'푸른 도끼병',armor:6,sprite:'axer'},     // 중장 브루저(고체력+방어)
   boss:{hp:1400,spd:24,r:.62,col:'#7a2f55',gold:160,name:'마왕',armor:5,boss:true,sprite:'boss'}, // huge HP wall
 };
 // HP scaling per wave: 10웨이브까진 선형(초반 난이도 유지), 이후 준지수로 급상승.
@@ -301,8 +305,10 @@ function buildWave(n){
   if(n>=3)pool.push('split');
   if(n>=6)pool.push('armor');
   if(n>=8)pool.push('swift');
+  if(n>=9)pool.push('yeti');
   if(n>=10)pool.push('heal');
-  const costs={jab:2,fast:2,tank:5,split:3,armor:6,swift:4,heal:5};
+  if(n>=11)pool.push('axer');
+  const costs={jab:2,fast:2,tank:5,split:3,armor:6,swift:4,heal:5,yeti:5,axer:8};
   while(b>0){
     let t=pool[Math.floor(Math.random()*pool.length)];
     const cost=costs[t]||2;
@@ -313,14 +319,17 @@ function buildWave(n){
   if(n>=12 && n%5===0){ q.push('boss'); } // boss every 5th wave from 12+
   return q;
 }
+const BOSS_SPRITES=['boss','boss2','boss3','boss4'];
 function spawnEnemy(type){
   const base=ETYPES[type];
   const s=hpScale(G.wave);
+  // 보스는 등장할 때마다 4종을 순환 (마왕·돌 골렘·해골 기사·심연의 군주)
+  const sprite = base.boss ? BOSS_SPRITES[Math.floor(G.wave/5)%4] : base.sprite;
   G.enemies.push({type,x:WP[0].x,y:WP[0].y,dist:0,
     hp:base.hp*s, max:base.hp*s, spd:base.spd*(1+G.wave*0.018),
     r:base.r*CELL, col:base.col, gold:base.gold, name:base.name,
     splits:base.splits, armor:base.armor||0, regen:base.regen||0, boss:base.boss||false,
-    sprite:base.sprite, seed:Math.floor(Math.random()*10),
+    sprite, seed:Math.floor(Math.random()*10),
     slowT:0, slowF:1, ang:0, burn:0, burnT:0, burnDmg:0, mark:0});
 }
 
@@ -540,6 +549,8 @@ function spawnHit(x,y,col,n){
 // rich death burst: shockwave ring + outward sparks + drifting embers
 function spawnDeath(x,y,col,big){
   const N=big?22:12;
+  // 벡터 폭발 스프라이트 (한 번 재생)
+  if(FX_BURST.length) G.particles.push({x,y,vx:0,vy:0,t:0,life:big?0.55:0.4,shape:'fx',frames:FX_BURST,size:(big?2.6:1.5)*CELL});
   // shockwave ring
   G.particles.push({x,y,vx:0,vy:0,t:0,life:big?0.5:0.35,col:'#fff7e8',shape:'ring',r0:big?CELL*0.5:CELL*0.3});
   G.particles.push({x,y,vx:0,vy:0,t:0,life:big?0.6:0.4,col,shape:'ring',r0:big?CELL*0.35:CELL*0.2});
@@ -676,6 +687,12 @@ function drawBullet(b){
 }
 function drawParticle(p){
   const a=1-p.t/p.life; ctx.globalAlpha=Math.max(0,a);
+  if(p.shape==='fx'){
+    const fr=p.frames, idx=Math.min(fr.length-1,Math.floor((p.t/p.life)*fr.length)), im=fr[idx];
+    ctx.globalAlpha=1;
+    if(imgReady(im)) ctx.drawImage(im, p.x-p.size/2, p.y-p.size/2, p.size, p.size);
+    ctx.globalAlpha=1; return;
+  }
   if(p.shape==='ring'){
     ctx.strokeStyle=p.col; ctx.lineWidth=Math.max(1,p.r0*0.3*(1-a)+1);
     ctx.beginPath(); ctx.arc(p.x,p.y,p.r0*(1+(1-a)*2.2),0,6.28); ctx.stroke();
@@ -898,7 +915,7 @@ function drawEnemy(e){
   // shadow
   ctx.fillStyle='#0003'; ctx.beginPath();ctx.ellipse(0,s*0.9,s*0.9,s*0.32,0,0,6.28);ctx.fill();
   // walking sprite frame, flipped to face travel direction
-  const fr=ESPRITE[e.sprite]; const im=fr && fr[Math.floor(performance.now()/90 + (e.seed||0))%10];
+  const fr=ESPRITE[e.sprite]; const im=fr && fr[Math.floor(performance.now()/90 + (e.seed||0))%fr.length];
   if(imgReady(im)){
     const h=s*3.4, w=h*(im.naturalWidth/im.naturalHeight);
     ctx.save(); if(Math.cos(e.ang)<0) ctx.scale(-1,1);
@@ -1101,11 +1118,14 @@ function drawTower(t){
     // 타워 위에 사수(인간형 유닛) 합성 — 목표 방향을 바라봄
     const uim=IMG[def.unit];
     if(uim && imgReady(uim)){
-      const uh=CELL*0.62, uw=uh*(uim.naturalWidth/uim.naturalHeight);
+      const uh=CELL*0.78, uw=uh*(uim.naturalWidth/uim.naturalHeight);
       ctx.save();
-      ctx.translate(0,-CELL*0.52);                 // 타워 상단 플랫폼 위로
+      ctx.translate(0,-CELL*0.46);                 // 타워 상단 플랫폼에 발이 닿도록
+      // 살짝 그림자
+      ctx.globalAlpha=.25; ctx.fillStyle='#000';
+      ctx.beginPath(); ctx.ellipse(0,0,uw*0.34,uh*0.1,0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
       if(Math.cos(t.ang||0)>0) ctx.scale(-1,1);    // 적이 오른쪽이면 좌우 반전
-      ctx.drawImage(uim, -uw/2, -uh*0.7, uw, uh);
+      ctx.drawImage(uim, -uw/2, -uh*0.86, uw, uh);
       ctx.restore();
     }
   } else drawTowerBody(t,def,s,headScale);
