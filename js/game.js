@@ -1043,7 +1043,7 @@ function drawTower(t){
       const gm=UNIT_GEOM[def.unit]||{r:0.6,foot:0.93}, CH=0.95;
       const dh=CH*CELL/gm.r, dw=dh*(im.naturalWidth/im.naturalHeight);
       const top=CELL*0.3 - gm.foot*dh;             // 발이 받침(+0.3셀)에 닿도록
-      const flip=Math.cos(t.ang||0)>0;             // 적이 오른쪽이면 좌우 반전
+      const flip=Math.cos(t.ang||0)<0;             // 유닛 기본 우향 → 적이 왼쪽일 때만 반전
       ctx.save(); if(flip) ctx.scale(-1,1);
       ctx.drawImage(im, -dw/2, top, dw, dh);
       ctx.restore();
@@ -1345,7 +1345,7 @@ function openCodexView(kind){
   $('cvTitle').textContent=title;
   const fr=$('cvFrame');
   // load the standalone codex page from /pages (kind = maps | monsters | towers)
-  fr.src='pages/'+kind+'.html';
+  fr.src='pages/'+kind+'.html?v=8';   // 캐시 우회(도감 갱신 반영)
   $('codexView').style.display='flex';
 }
 $('cvBack').onclick=()=>{ $('codexView').style.display='none'; $('cvFrame').src='about:blank'; $('codexMenu').style.display='flex'; };

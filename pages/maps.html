@@ -19,11 +19,13 @@
     grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
   .card{background:var(--bone); border:3px solid var(--ink); border-radius:9px;
     overflow:hidden; box-shadow:0 8px 0 #00000055; color:var(--ink);}
-  .card .pic{width:100%; aspect-ratio:16/9; object-fit:cover; display:block; border-bottom:2px solid var(--ink);}
-  .card .top{display:flex; align-items:baseline; gap:8px; padding:11px 15px 4px;}
+  .card canvas{width:100%; aspect-ratio:16/9; display:block; border-bottom:2px solid var(--ink);}
+  .card .top{display:flex; align-items:center; gap:8px; padding:11px 15px 4px;}
   .card .idx{font-size:12px; font-weight:700; color:#fff; background:var(--ink);
     width:24px; height:24px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto;}
   .card .nm{font-size:19px; font-weight:700;}
+  .card .legend{margin-left:auto; font-size:10.5px; color:#7a6a52;}
+  .card .legend b{color:#3a8a6a;} .card .legend i{color:#c8442e; font-style:normal;}
   .card .d{padding:4px 15px 16px; font-size:13px; line-height:1.55; color:#4a3c2c;}
   footer{text-align:center; font-size:11px; opacity:.4; padding:0 0 30px;}
 </style>
@@ -31,26 +33,58 @@
 <body>
 <header>
   <h1><span class="b">성채</span> 수호전 · 전장 일람</h1>
-  <p>마물이 밀려오는 다섯 갈래 전장</p>
+  <p>마물이 밀려오는 다섯 전장 — 실제 진군 경로</p>
   <div class="rule"></div>
 </header>
 <div class="grid" id="grid"></div>
 <footer>성채 수호전 — 전장 일람</footer>
 <script>
+// 게임과 동일한 경로 데이터 (REF 15x11 격자의 모서리 waypoint)
+const REF_COLS=15, REF_ROWS=11;
 const MAPS=[
- {bg:'map1',nm:'마른 뼈 사막',d:'고목과 백골이 나뒹구는 메마른 사막. 굽이진 길이 성으로 곧장 이어진다.'},
- {bg:'map2',nm:'수정 동굴',d:'푸른 수정이 솟은 마법 지대. 빙결 마법이 유난히 잘 어울리는 전장.'},
- {bg:'map3',nm:'잿빛 협곡',d:'마물이 기어나오는 동굴과 잿빛 바위의 협곡. 길이 길고 구불구불하다.'},
- {bg:'map4',nm:'폐허의 숲',d:'무너진 석주와 이끼 낀 폐허가 늘어선 숲. 갈래길이 많아 시야가 어지럽다.'},
- {bg:'map3',nm:'망자의 길',d:'잿빛 협곡 깊은 곳, 망자들이 끝없이 행군하는 외길.'},
+ {bg:'map1',nm:'마른 뼈 사막',d:'고목과 백골이 나뒹구는 메마른 사막. 굽이진 길이 성으로 곧장 이어진다.',
+  corners:[[0,1],[14,1],[14,3],[0,3],[0,5],[14,5],[14,7],[0,7],[0,9],[14,9]]},
+ {bg:'map2',nm:'수정 동굴',d:'푸른 수정이 솟은 마법 지대. 빙결 마법이 유난히 잘 어울리는 전장.',
+  corners:[[0,1],[4,1],[4,5],[8,5],[8,1],[12,1],[12,6],[14,6],[14,8],[2,8],[2,10],[14,10]]},
+ {bg:'map3',nm:'잿빛 협곡',d:'마물이 기어나오는 동굴과 잿빛 바위의 협곡. 길이 길고 구불구불하다.',
+  corners:[[0,1],[14,1],[14,9],[2,9],[2,3],[12,3],[12,7],[5,7],[5,5],[9,5]]},
+ {bg:'map4',nm:'폐허의 숲',d:'무너진 석주와 이끼 낀 폐허가 늘어선 숲. 갈래길이 많아 시야가 어지럽다.',
+  corners:[[0,2],[11,2],[11,5],[3,5],[3,8],[14,8],[14,10],[6,10],[6,6],[0,6]]},
+ {bg:'map3',nm:'망자의 길',d:'잿빛 협곡 깊은 곳, 망자들이 끝없이 행군하는 외길.',
+  corners:[[0,10],[2,10],[2,1],[5,1],[5,10],[8,10],[8,1],[11,1],[11,10],[14,10],[14,4]]},
 ];
+function drawMap(cv,m){
+  cv.width=480; cv.height=270; const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  const img=new Image();
+  img.onload=()=>{
+    ctx.drawImage(img,0,0,W,H);
+    ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(0,0,W,H);
+    const pts=m.corners.map(([c,r])=>[ (c/(REF_COLS-1))*W, (r/(REF_ROWS-1))*H ]);
+    const stroke=(col,w,dash)=>{ ctx.strokeStyle=col; ctx.lineWidth=w; ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.setLineDash(dash||[]); ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); ctx.setLineDash([]); };
+    stroke('rgba(30,20,12,0.55)', H*0.085);
+    stroke('rgba(225,210,178,0.92)', H*0.05);
+    stroke('rgba(120,100,70,0.8)', H*0.05, [H*0.02,H*0.055]);
+    const s=pts[0], e=pts[pts.length-1];
+    // 출발(동굴) — 청록 동그라미
+    ctx.fillStyle='#3a3038'; ctx.beginPath(); ctx.arc(s[0],s[1],H*0.05,0,6.28); ctx.fill();
+    ctx.fillStyle='#6fe0b5'; ctx.beginPath(); ctx.arc(s[0],s[1],H*0.028,0,6.28); ctx.fill();
+    // 도착(성) — 붉은 사각
+    ctx.fillStyle='#7a8aa0'; ctx.fillRect(e[0]-H*0.05,e[1]-H*0.05,H*0.1,H*0.1);
+    ctx.strokeStyle='#2b2620'; ctx.lineWidth=2; ctx.strokeRect(e[0]-H*0.05,e[1]-H*0.05,H*0.1,H*0.1);
+    ctx.fillStyle='#c8442e'; ctx.fillRect(e[0]-H*0.018,e[1]-H*0.05,H*0.036,H*0.05);
+  };
+  img.src='../assets/maps/'+m.bg+'.png';
+}
 const grid=document.getElementById('grid');
 MAPS.forEach((m,i)=>{
   const el=document.createElement('div'); el.className='card';
-  el.innerHTML='<img class="pic" src="../assets/maps/'+m.bg+'.png" alt="'+m.nm+'">'+
-   '<div class="top"><span class="idx">'+(i+1)+'</span><span class="nm">'+m.nm+'</span></div>'+
+  el.innerHTML='<canvas></canvas>'+
+   '<div class="top"><span class="idx">'+(i+1)+'</span><span class="nm">'+m.nm+'</span>'+
+     '<span class="legend"><b>●</b> 출발 · <i>■</i> 성</span></div>'+
    '<div class="d">'+m.d+'</div>';
   grid.appendChild(el);
+  drawMap(el.querySelector('canvas'),m);
 });
 </script>
 </body>
