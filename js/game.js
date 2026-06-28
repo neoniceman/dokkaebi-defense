@@ -272,8 +272,10 @@ const ETYPES={
   heal:{hp:90,spd:42,r:.36,col:'#5f9a6b',gold:18,name:'환쟁이',regen:14},        // self-heal → rewards burst/splash
   boss:{hp:1400,spd:24,r:.62,col:'#7a2f55',gold:160,name:'도깨비대왕',armor:5,boss:true}, // huge HP wall
 };
-// HP scaling per wave (compounding a bit in the late game)
-function hpScale(n){ return 1 + n*0.14 + Math.max(0,n-10)*0.06; }
+// HP scaling per wave: 10웨이브까진 선형(초반 난이도 유지), 이후 준지수로 급상승.
+// 플레이어 화력이 카드/업글로 곱셈 성장하므로 적 체력도 후반엔 곱셈으로 따라붙어
+// '맵 앞에서 전멸'하는 추월 지점을 크게 뒤로 민다.
+function hpScale(n){ return 1 + n*0.13 + (n>10 ? Math.pow(1.12, n-10)-1 : 0); }
 function buildWave(n){
   const q=[]; const budget=8+n*5; let b=budget;
   const pool=['jab'];
@@ -297,7 +299,7 @@ function spawnEnemy(type){
   const base=ETYPES[type];
   const s=hpScale(G.wave);
   G.enemies.push({type,x:WP[0].x,y:WP[0].y,dist:0,
-    hp:base.hp*s, max:base.hp*s, spd:base.spd*(1+G.wave*0.012),
+    hp:base.hp*s, max:base.hp*s, spd:base.spd*(1+G.wave*0.018),
     r:base.r*CELL, col:base.col, gold:base.gold, name:base.name,
     splits:base.splits, armor:base.armor||0, regen:base.regen||0, boss:base.boss||false,
     slowT:0, slowF:1, ang:0, burn:0, burnT:0, burnDmg:0, mark:0});
@@ -553,10 +555,10 @@ function endWave(){
   showCards();
 }
 const CARDPOOL=[
-  {t:'예리한 부적',d:'모든 수문장 피해 +18%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.18},
-  {t:'바람 신발',d:'모든 수문장 공격속도 +15%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.15},
-  {t:'천리안',d:'모든 수문장 사거리 +12%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.12},
-  {t:'엽전 주머니',d:'처치 보상 +25%, 엽전 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.25;G.gold+=40;}},
+  {t:'예리한 부적',d:'모든 수문장 피해 +12%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.12},
+  {t:'바람 신발',d:'모든 수문장 공격속도 +10%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.10},
+  {t:'천리안',d:'모든 수문장 사거리 +8%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.08},
+  {t:'엽전 주머니',d:'처치 보상 +18%, 엽전 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.18;G.gold+=40;}},
   {t:'성벽 보수',d:'성문 생명 +6 회복',tag:'수호',rare:0,svg:'life',act:()=>{G.life+=6;}},
 ];
 function unlockCard(id){const t=TOWERS[id];return {t:t.name+' 해금',d:t.desc,tag:'수문장',rare:1,svg:id,act:()=>{t.unlocked=true;syncTray();}};}
