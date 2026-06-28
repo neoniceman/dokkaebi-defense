@@ -4,10 +4,11 @@ const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 
 // ---------- sprite assets (CraftPix · Tower Defense 2D Game Kit) ----------
-const IMG={}, ESPRITE={}, UNIT={}; let FX_BURST=[], FX_FIRE=[], FX_WATER=[], FX_BOOM=[]; let _imgPending=0;
+const IMG={}, ESPRITE={}, UNIT={}; let FX_BURST=[], FX_FIRE=[], FX_WATER=[], FX_BOOM=[], FX_FARROW=[]; let _imgPending=0;
 // 유닛별 캐릭터 비율(r=프레임높이 대비 캐릭터높이, foot=발 위치) → 모든 유닛 크기 통일용
 const UNIT_GEOM={archer:{r:0.633,foot:0.919},elf:{r:0.493,foot:0.789},wizard:{r:0.7,foot:0.955},
-  wizard2:{r:0.6,foot:0.955},viking:{r:0.693,foot:0.943},druid:{r:0.694,foot:0.867},ent:{r:0.896,foot:0.938}};
+  wizard2:{r:0.6,foot:0.955},viking:{r:0.693,foot:0.943},druid:{r:0.694,foot:0.867},ent:{r:0.896,foot:0.938},
+  firemage:{r:0.63,foot:0.955}};
 function _img(src){ const im=new Image(); _imgPending++;
   im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
 function loadAssets(){
@@ -17,7 +18,7 @@ function loadAssets(){
   IMG.ice=_img('assets/fx/ice.png');
   IMG.fireball=_img('assets/fx/fireball.png');
   // 애니메이션 방어 유닛 (직업별 idle + attack 프레임)
-  ['archer','elf','wizard','wizard2','viking','druid','ent'].forEach(k=>{
+  ['archer','elf','wizard','wizard2','viking','druid','ent','firemage'].forEach(k=>{
     UNIT[k]={idle:[],atk:[]};
     for(let i=0;i<10;i++){ UNIT[k].idle[i]=_img('assets/units/'+k+'/idle/f'+i+'.png');
       UNIT[k].atk[i]=_img('assets/units/'+k+'/atk/f'+i+'.png'); }
@@ -29,6 +30,7 @@ function loadAssets(){
   for(let i=0;i<12;i++) FX_BURST[i]=_img('assets/fx/burst/f'+i+'.png');
   for(let i=0;i<8;i++)  FX_FIRE[i]=_img('assets/fx/fire/f'+i+'.png');
   for(let i=0;i<12;i++) FX_WATER[i]=_img('assets/fx/water/f'+i+'.png');
+  for(let i=0;i<8;i++)  FX_FARROW[i]=_img('assets/fx/firearrow/f'+i+'.png');
   for(let i=0;i<10;i++) FX_BOOM[i]=_img('assets/fx/boom/f'+i+'.png');
   IMG.castle=_img('assets/structures/castle.png'); IMG.cave=_img('assets/structures/cave.png');
 }
@@ -68,7 +70,7 @@ function noise(dur,vol,filterFreq){
 const SND={
   shoot(id){
     if(id==='kkachi') tone(900,0.06,'square',0.05,1300);
-    else if(id==='bul') return; // flamethrower handled by loop
+    else if(id==='bul') { tone(520,0.12,'sawtooth',0.07,260); noise(0.1,0.05,1400); } // 화염탄
     else if(id==='seori') tone(700,0.12,'sine',0.06,1100);
     else if(id==='beom') { tone(180,0.16,'sawtooth',0.12,90); noise(0.1,0.08,800); }
     else tone(420,0.08,'triangle',0.08,300); // jangseung
@@ -206,8 +208,8 @@ const TOWERS={
     desc:'길목을 지키는 궁수. 단일 대상 명중.'},
   kkachi:{name:'석궁수',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',unit:'elf',
     desc:'빠른 연사. 약하지만 끊임없이 쏜다.'},
-  bul:{name:'흑마법사',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',unit:'wizard',
-    desc:'범위 화염 마법. 뭉친 무리에 강하다.'},
+  bul:{name:'화염술사',cost:90,range:2.6,rate:1.1,dmg:13,col:'#e0612e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',unit:'firemage',
+    desc:'붉은 화염 마법탄을 쏜다. 적중 시 범위 폭발.'},
   seori:{name:'빙결술사',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',unit:'druid',
     desc:'적을 얼려 둔화. 피해는 적다.'},
   beom:{name:'전사',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'viking',
@@ -442,30 +444,7 @@ function update(dt){
     for(const e of G.enemies){ if(e.dead)continue;
       const d=Math.hypot(e.x-t.x,e.y-t.y);
       if(d<=rng && e.dist>bd){bd=e.dist;tgt=e;} }
-    if(t.id==='bul'){
-      // 불도깨비: continuous flamethrower — sprays a cone, no projectile
-      t.flame=t.flame||0;
-      if(tgt){
-        t.ang=Math.atan2(tgt.y-t.y,tgt.x-t.x);
-        t.flame=Math.min(1,t.flame+dt*4);            // ramp up
-        // flamethrower hiss (throttled so it loops smoothly)
-        t.fsnd=(t.fsnd||0)-dt; if(t.fsnd<=0){ t.fsnd=0.14; noise(0.16,0.05,1100); }
-        const dps=(st.dmg*G.buffs.dmg)/0.9;          // continuous dmg/sec ≈ original
-        const coneR=rng*0.95, half=0.42;             // cone reach & half-angle
-        for(const e of G.enemies){ if(e.dead)continue;
-          const dx=e.x-t.x, dy=e.y-t.y, d=Math.hypot(dx,dy);
-          if(d>coneR) continue;
-          let da=Math.atan2(dy,dx)-t.ang;
-          da=Math.atan2(Math.sin(da),Math.cos(da));
-          if(Math.abs(da)<=half){
-            dealDamage(e, dps*dt, {ignoreArmor:false});
-            if(t.branch==='burn' && !e.dead){ e.burn=1; e.burnT=2; e.burnDmg=st.dmg*0.4; }
-          }
-        }
-      } else {
-        t.flame=Math.max(0,t.flame-dt*3);            // fade out
-      }
-    } else if(tgt){ t.ang=Math.atan2(tgt.y-t.y,tgt.x-t.x);
+    if(tgt){ t.ang=Math.atan2(tgt.y-t.y,tgt.x-t.x);
       if(t.cd<=0){ t.cd=st.rate/G.buffs.rate; fire(t,def,tgt,st); } }
   }
   // damage-over-time (burn) ticks
@@ -671,8 +650,21 @@ function draw(){
 function drawBullet(b){
   const def=b.def, id=b.tid, ang=Math.atan2(b.ty-b.sy,b.tx-b.sx);
   const R=CELL*0.10;
-  // 활·근접 유닛(궁수·석궁·병영)은 공격 애니메이션이 발사를 표현 → 별도 발사체 미표시
-  if(id==='jangseung'||id==='kkachi'||id==='beom') return;
+  // 화염술사 → Fire Arrow 화염 발사체 (이미지 머리가 좌측 → ang+π로 진행방향 정렬)
+  if(id==='bul' && FX_FARROW.length){
+    const idx=Math.floor((b.t/Math.max(0.001,b.dur))*FX_FARROW.length)%FX_FARROW.length, im=FX_FARROW[idx];
+    if(imgReady(im)){ const h=CELL*0.5, w=h*(im.naturalWidth/im.naturalHeight);
+      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI); ctx.drawImage(im,-w/2,-h/2,w,h); ctx.restore(); }
+    return;
+  }
+  // 물리 발사체(궁수·석궁·병영) → 화살 스프라이트, 진행방향으로 회전
+  const arrow=IMG.arrow;
+  if((id==='jangseung'||id==='kkachi'||id==='beom') && imgReady(arrow)){
+    const h = id==='kkachi'? CELL*0.34 : id==='beom'? CELL*0.58 : CELL*0.46;
+    const w = h*(arrow.naturalWidth/arrow.naturalHeight)*(id==='kkachi'?1.7:1);
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2); ctx.drawImage(arrow,-w/2,-h/2,w,h); ctx.restore();
+    return;
+  }
   // 마법 발사체(벡터 애니): 빙결=물구슬 / 비전·포탑=불구슬
   const anim = id==='seori'? FX_WATER : (id==='arcane'||id==='cannon')? FX_FIRE : null;
   if(anim && anim.length){
@@ -870,12 +862,13 @@ function drawEnemy(e){
     ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12); ctx.lineJoin='round';
     drawEnemyBody(e,s,type);
   }
-  // ---- 상태 오버레이 (스프라이트 몸통에 맞춘 타원) ----
-  const oy=-s*0.6, orx=s*1.0, ory=s*1.4;
-  if(e.slowT>0){ ctx.globalAlpha=.34; ctx.fillStyle='#9fdcff';
-    ctx.beginPath(); ctx.ellipse(0,oy,orx,ory,0,0,6.28); ctx.fill();
-    ctx.globalAlpha=.7; ctx.strokeStyle='#d6f1ff'; ctx.lineWidth=Math.max(1.5,s*0.12);
-    ctx.beginPath(); ctx.ellipse(0,oy,orx,ory,0,0,6.28); ctx.stroke(); ctx.globalAlpha=1; }
+  // ---- 상태 오버레이 (스프라이트 몸통 기준) ----
+  const oy=-s*0.7, orx=s*1.0, ory=s*1.4;
+  // 빙결: Water Ball 보호막으로 몬스터를 감쌈 (몬스터 크기에 맞춤)
+  if(e.slowT>0 && FX_WATER.length){
+    const im=FX_WATER[Math.floor(performance.now()/90)%FX_WATER.length], sz=s*3.2;
+    if(imgReady(im)){ ctx.globalAlpha=0.72; ctx.drawImage(im,-sz/2,oy-sz/2,sz,sz); ctx.globalAlpha=1; }
+  }
   if(e.burn>0){ ctx.globalAlpha=.28+Math.random()*0.18; ctx.fillStyle='#e0612e';
     ctx.beginPath(); ctx.ellipse(0,oy,orx*0.95,ory*0.95,0,0,6.28); ctx.fill(); ctx.globalAlpha=1; }
   if(e.mark>0){ ctx.strokeStyle='#e0a82e'; ctx.lineWidth=Math.max(1.5,s*0.12);
@@ -1031,33 +1024,6 @@ function drawTower(t){
     ctx.globalAlpha=.45; ctx.strokeStyle=def.col; ctx.lineWidth=2; ctx.setLineDash([6,5]);
     ctx.beginPath();ctx.arc(cx,cy,st.range*CELL*G.buffs.range,0,6.28);ctx.stroke();
     ctx.setLineDash([]); ctx.globalAlpha=1;
-  }
-  // 불도깨비 flamethrower cone (drawn under the tower, in world space)
-  if(t.id==='bul' && t.flame>0){
-    const st=towerStat(t);
-    const reach=st.range*CELL*G.buffs.range*0.95*t.flame;
-    const half=0.42;
-    ctx.save(); ctx.translate(cx,cy-CELL*0.45); ctx.rotate(t.ang);   // 시전자 손 높이에서 분사
-    // layered flame: outer red, mid orange, inner yellow, with flicker
-    const layers=[['#c8442e',1.0,0.5],['#e0a82e',0.82,0.62],['#ffd34d',0.6,0.72],['#fff3c0',0.34,0.85]];
-    for(const [col,rf,af] of layers){
-      const flick=0.9+Math.random()*0.2;
-      ctx.globalAlpha=(0.55*af)*t.flame;
-      ctx.fillStyle=col;
-      ctx.beginPath(); ctx.moveTo(0,0);
-      const rr=reach*rf*flick;
-      ctx.arc(0,0,rr,-half,half);
-      ctx.closePath(); ctx.fill();
-    }
-    // a few flame tongues / embers along the cone
-    ctx.globalAlpha=t.flame;
-    for(let i=0;i<5;i++){
-      const a=(-half)+(i/4)*half*2 + (Math.random()-0.5)*0.1;
-      const rr=reach*(0.5+Math.random()*0.5);
-      ctx.fillStyle=Math.random()<0.5?'#ffd34d':'#e0a82e';
-      ctx.beginPath(); ctx.arc(Math.cos(a)*rr,Math.sin(a)*rr,CELL*0.05*Math.random()+1,0,6.28); ctx.fill();
-    }
-    ctx.globalAlpha=1; ctx.restore();
   }
   ctx.save();ctx.translate(cx,cy);
   // 바닥 그림자 + 작은 돌 받침(캐릭터가 떠 보이지 않게)
