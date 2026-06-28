@@ -118,19 +118,27 @@ addEventListener('orientationchange',()=>setTimeout(resize,200));
 const MAPS=[
   { id:'gogae', name:'뱀고개',
     // dense horizontal serpentine, 6 lanes
-    corners:[[0,1],[14,1],[14,3],[0,3],[0,5],[14,5],[14,7],[0,7],[0,9],[14,9]] },
+    corners:[[0,1],[14,1],[14,3],[0,3],[0,5],[14,5],[14,7],[0,7],[0,9],[14,9]],
+    // 끝점이 아래쪽(row9) → 위로 솟은 2층 누각 숭례문
+    gate:{name:'숭례문', tiers:2, base:'#9a9184', roof:'#39414e', dc:'#b23a2c', arches:1, scale:1.05} },
   { id:'sipja', name:'십자령',
     // long staircase that fans across both halves
-    corners:[[0,1],[4,1],[4,5],[8,5],[8,1],[12,1],[12,6],[14,6],[14,8],[2,8],[2,10],[14,10]] },
+    corners:[[0,1],[4,1],[4,5],[8,5],[8,1],[12,1],[12,6],[14,6],[14,8],[2,8],[2,10],[14,10]],
+    gate:{name:'흥인지문', tiers:1, base:'#9a9184', roof:'#4b4f48', dc:'#2f7a5f', arches:1, scale:1.18} },
   { id:'nagseon', name:'소용돌이',
     // inward spiral wrapping the board
-    corners:[[0,1],[14,1],[14,9],[2,9],[2,3],[12,3],[12,7],[5,7],[5,5],[9,5]] },
+    corners:[[0,1],[14,1],[14,9],[2,9],[2,3],[12,3],[12,7],[5,7],[5,5],[9,5]],
+    // 3홍예문의 웅장한 광화문
+    gate:{name:'광화문', tiers:1, base:'#8f877a', roof:'#2f3a48', dc:'#c8442e', arches:3, scale:1.12} },
   { id:'eotgal', name:'엇갈림',
     // offset zigzag with uneven lane lengths, spread across the board
-    corners:[[0,2],[11,2],[11,5],[3,5],[3,8],[14,8],[14,10],[6,10],[6,6],[0,6]] },
+    corners:[[0,2],[11,2],[11,5],[3,5],[3,8],[14,8],[14,10],[6,10],[6,6],[0,6]],
+    gate:{name:'돈의문', tiers:1, base:'#a59c8c', roof:'#46384f', dc:'#b23a2c', arches:1, scale:0.92} },
   { id:'jangmun', name:'장문곡',
     // vertical comb: repeated up-down teeth
-    corners:[[0,10],[2,10],[2,1],[5,1],[5,10],[8,10],[8,1],[11,1],[11,10],[14,10],[14,4]] },
+    corners:[[0,10],[2,10],[2,1],[5,1],[5,10],[8,10],[8,1],[11,1],[11,10],[14,10],[14,4]],
+    // 끝점이 위쪽(row4) → 키 작고 소박한 산성문 숙정문
+    gate:{name:'숙정문', tiers:1, base:'#7d756a', roof:'#5a4a3a', dc:'#8a6a3a', arches:1, scale:0.86} },
 ];
 const REF_COLS=15, REF_ROWS=11;
 let curMap=MAPS[0];
@@ -738,42 +746,11 @@ function drawSpawn(s){
   }
   ctx.restore();
 }
-// 성문(광화문풍) 골인 지점: 석축 위에 단청 문루와 치켜 올라간 기와지붕
-function drawGate(g){
-  const u=CELL, cx=g.x, cy=g.y;
-  ctx.save(); ctx.lineJoin='round'; ctx.lineCap='round';
-  const hurt=(G&&G.gateHurt>0)?G.gateHurt/0.45:0;   // 피격 번쩍임 세기 0~1
-  // ----- 석축 (stone base wall) -----
-  const baseT=cy-u*0.16, baseB=cy+u*0.52, twH=u*0.44, bwH=u*0.52;
-  ctx.beginPath();
-  ctx.moveTo(cx-bwH,baseB); ctx.lineTo(cx-twH,baseT);
-  ctx.lineTo(cx+twH,baseT); ctx.lineTo(cx+bwH,baseB); ctx.closePath();
-  ctx.fillStyle='#9a9184'; ctx.fill();
-  ctx.strokeStyle='#4a4036'; ctx.lineWidth=Math.max(1,u*0.03); ctx.stroke();
-  ctx.strokeStyle='#00000022'; ctx.lineWidth=1;                  // 돌 줄눈
-  for(let i=1;i<3;i++){const y=baseT+(baseB-baseT)*i/3;
-    ctx.beginPath(); ctx.moveTo(cx-bwH*(0.82+0.06*i),y); ctx.lineTo(cx+bwH*(0.82+0.06*i),y); ctx.stroke();}
-  // ----- 홍예문 (arched gateway, dark passage) -----
-  const ow=u*0.17, archTop=cy+u*0.04;
-  ctx.fillStyle='#15110d';
-  ctx.beginPath();
-  ctx.moveTo(cx-ow,baseB); ctx.lineTo(cx-ow,archTop);
-  ctx.arc(cx,archTop,ow,Math.PI,0); ctx.lineTo(cx+ow,baseB); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='#cdbf9e'; ctx.lineWidth=Math.max(1.5,u*0.035); // 무지개 돌테
-  ctx.beginPath(); ctx.arc(cx,archTop,ow+u*0.02,Math.PI,0); ctx.stroke();
-  // ----- 문루 나무벽 + 단청 (wooden gate-tower wall) -----
-  const wallB=baseT, wallT=cy-u*0.34, wallHW=u*0.40;
-  ctx.fillStyle='#6e4628'; ctx.fillRect(cx-wallHW,wallT,wallHW*2,wallB-wallT);
-  ctx.strokeStyle='#3f2614'; ctx.lineWidth=Math.max(1,u*0.02);
-  ctx.strokeRect(cx-wallHW,wallT,wallHW*2,wallB-wallT);
-  for(let i=-1;i<=1;i++){const x=cx+i*wallHW*0.66;                // 기둥
-    ctx.beginPath(); ctx.moveTo(x,wallT); ctx.lineTo(x,wallB); ctx.stroke();}
-  const dcY=wallT, dcH=u*0.07;                                    // 단청 띠
-  ctx.fillStyle='#b23a2c'; ctx.fillRect(cx-wallHW,dcY,wallHW*2,dcH);
-  ctx.fillStyle='#2f7a5f';
-  for(let x=cx-wallHW+u*0.03;x<cx+wallHW-u*0.02;x+=u*0.1) ctx.fillRect(x,dcY+dcH*0.25,u*0.035,dcH*0.5);
-  // ----- 기와지붕 (curved tiled roof, 처마가 치켜 올라감) -----
-  const RW=u*0.62, ey=cy-u*0.34, ty=cy-u*0.72, RHW=RW*0.30;
+// 골인 지점 성문 — 맵마다 이름·층수·홍예문 수·색이 다름 (curMap.gate 설정)
+const GATE_DEFAULT={name:'성문', tiers:1, base:'#9a9184', roof:'#39414e', dc:'#b23a2c', arches:1, scale:1};
+// 치켜 올라간 기와지붕 한 채 그리기 (처마선 ey, 용마루 ty, 반폭 RW)
+function gateRoof(cx,ey,ty,RW,col,u){
+  const RHW=RW*0.30;
   ctx.beginPath();
   ctx.moveTo(cx-RW, ey-u*0.05);
   ctx.quadraticCurveTo(cx, ey+u*0.10, cx+RW, ey-u*0.05);         // 늘어진 처마선
@@ -781,34 +758,84 @@ function drawGate(g){
   ctx.lineTo(cx-RHW, ty);                                        // 용마루
   ctx.quadraticCurveTo(cx-RW*0.55, ty+u*0.05, cx-RW, ey-u*0.05); // 왼 지붕면
   ctx.closePath();
-  ctx.fillStyle='#39414e'; ctx.fill();
+  ctx.fillStyle=col; ctx.fill();
   ctx.strokeStyle='#20252e'; ctx.lineWidth=Math.max(1,u*0.03); ctx.stroke();
-  ctx.strokeStyle='#5a6573'; ctx.lineWidth=Math.max(1,u*0.025);  // 처마 기와줄
+  ctx.strokeStyle='#ffffff26'; ctx.lineWidth=Math.max(1,u*0.022);// 처마 기와줄
   ctx.beginPath(); ctx.moveTo(cx-RW,ey-u*0.05); ctx.quadraticCurveTo(cx,ey+u*0.10,cx+RW,ey-u*0.05); ctx.stroke();
-  ctx.strokeStyle='#aeb6c0'; ctx.lineWidth=Math.max(1.5,u*0.04); // 용마루 마루기와
+  ctx.strokeStyle='#c9d2dc'; ctx.lineWidth=Math.max(1.5,u*0.04); // 용마루 마루기와
   ctx.beginPath(); ctx.moveTo(cx-RHW,ty); ctx.lineTo(cx+RHW,ty); ctx.stroke();
   ctx.fillStyle='#20252e';                                       // 치미(양끝 장식)
   ctx.beginPath(); ctx.arc(cx-RHW,ty,u*0.045,0,6.28); ctx.fill();
   ctx.beginPath(); ctx.arc(cx+RHW,ty,u*0.045,0,6.28); ctx.fill();
-  // ----- 성문 체력 게이지 (지붕 위, 충돌 시 줄어듦) -----
+}
+function drawGate(g){
+  const u=CELL, cx=g.x, cy=g.y;
+  const gt=(curMap&&curMap.gate)||GATE_DEFAULT, sc=gt.scale||1;
+  ctx.save(); ctx.lineJoin='round'; ctx.lineCap='round';
+  const hurt=(G&&G.gateHurt>0)?G.gateHurt/0.45:0;   // 피격 번쩍임 세기 0~1
+  // ----- 석축 (stone base wall) -----
+  const baseT=cy-u*0.16, baseB=cy+u*0.52, twH=u*0.44*sc, bwH=u*0.52*sc;
+  ctx.beginPath();
+  ctx.moveTo(cx-bwH,baseB); ctx.lineTo(cx-twH,baseT);
+  ctx.lineTo(cx+twH,baseT); ctx.lineTo(cx+bwH,baseB); ctx.closePath();
+  ctx.fillStyle=gt.base; ctx.fill();
+  ctx.strokeStyle='#4a4036'; ctx.lineWidth=Math.max(1,u*0.03); ctx.stroke();
+  ctx.strokeStyle='#00000022'; ctx.lineWidth=1;                  // 돌 줄눈
+  for(let i=1;i<3;i++){const y=baseT+(baseB-baseT)*i/3;
+    ctx.beginPath(); ctx.moveTo(cx-bwH*(0.82+0.06*i),y); ctx.lineTo(cx+bwH*(0.82+0.06*i),y); ctx.stroke();}
+  // ----- 홍예문 (1개 또는 3개) -----
+  const archY=cy+u*0.04, nA=gt.arches===3?3:1;
+  const arr=(nA===3? u*0.105 : u*0.17), spread=u*0.245*sc;
+  (nA===3? [-1,0,1] : [0]).forEach(o=>{ const ax=cx+o*spread;
+    ctx.fillStyle='#15110d';
+    ctx.beginPath();
+    ctx.moveTo(ax-arr,baseB); ctx.lineTo(ax-arr,archY);
+    ctx.arc(ax,archY,arr,Math.PI,0); ctx.lineTo(ax+arr,baseB); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#cdbf9e'; ctx.lineWidth=Math.max(1.2,u*0.03);// 무지개 돌테
+    ctx.beginPath(); ctx.arc(ax,archY,arr+u*0.02,Math.PI,0); ctx.stroke();
+  });
+  // ----- 문루 나무벽 + 단청 (1층) -----
+  const wallB=baseT, wallT=cy-u*0.34, wallHW=u*0.40*sc;
+  ctx.fillStyle='#6e4628'; ctx.fillRect(cx-wallHW,wallT,wallHW*2,wallB-wallT);
+  ctx.strokeStyle='#3f2614'; ctx.lineWidth=Math.max(1,u*0.02);
+  ctx.strokeRect(cx-wallHW,wallT,wallHW*2,wallB-wallT);
+  for(let i=-1;i<=1;i++){const x=cx+i*wallHW*0.66;                // 기둥
+    ctx.beginPath(); ctx.moveTo(x,wallT); ctx.lineTo(x,wallB); ctx.stroke();}
+  ctx.fillStyle=gt.dc; ctx.fillRect(cx-wallHW,wallT,wallHW*2,u*0.07);   // 단청 띠
+  ctx.fillStyle='#e8d28a';
+  for(let x=cx-wallHW+u*0.03;x<cx+wallHW-u*0.02;x+=u*0.1) ctx.fillRect(x,wallT+u*0.0175,u*0.035,u*0.035);
+  // ----- 지붕 (1층 또는 2층 누각) -----
+  const RW=u*0.62*sc; let topY;
+  if(gt.tiers===2){
+    gateRoof(cx, cy-u*0.34, cy-u*0.60, RW, gt.roof, u);          // 아래 지붕
+    const uwHW=wallHW*0.66, uwB=cy-u*0.60, uwT=cy-u*0.84;         // 위층 벽
+    ctx.fillStyle='#6e4628'; ctx.fillRect(cx-uwHW,uwT,uwHW*2,uwB-uwT);
+    ctx.strokeStyle='#3f2614'; ctx.lineWidth=Math.max(1,u*0.02); ctx.strokeRect(cx-uwHW,uwT,uwHW*2,uwB-uwT);
+    ctx.fillStyle=gt.dc; ctx.fillRect(cx-uwHW,uwT,uwHW*2,u*0.05);
+    gateRoof(cx, cy-u*0.84, cy-u*1.12, RW*0.72, gt.roof, u);      // 위 지붕
+    topY=cy-u*1.12;
+  } else {
+    gateRoof(cx, cy-u*0.34, cy-u*0.72, RW, gt.roof, u);
+    topY=cy-u*0.72;
+  }
+  // ----- 체력 게이지 (최상단 지붕 위, 맵별 성문 이름 표시) -----
   if(G && G.maxLife){
     const denom=Math.max(G.maxLife,G.life,1), rat=Math.max(0,Math.min(1,G.life/denom));
-    const barW=u*1.18, barH=Math.max(4,u*0.16);
-    const bx=cx-barW/2, by=Math.max(OY+3, cy-u*1.12);
+    const barW=Math.max(u*1.2, u*0.45+gt.name.length*u*0.24), barH=Math.max(4,u*0.17);
+    const bx=cx-barW/2, by=Math.max(OY+3, topY-u*0.34);
     ctx.fillStyle='#1d1712'; ctx.fillRect(bx-2,by-2,barW+4,barH+4);     // 테두리
     ctx.fillStyle='#3a2c20'; ctx.fillRect(bx,by,barW,barH);            // 빈 게이지
     ctx.fillStyle=rat>0.5?'#6fbf52':rat>0.25?'#e0a82e':'#c8442e';      // 잔량 색
     ctx.fillRect(bx,by,barW*rat,barH);
     ctx.fillStyle='#ffffff33'; ctx.fillRect(bx,by,barW*rat,barH*0.4);  // 광택
-    ctx.fillStyle='#f3ead6'; ctx.font='bold '+Math.round(u*0.18)+'px sans-serif';
+    ctx.fillStyle='#f3ead6'; ctx.font='bold '+Math.round(u*0.17)+'px sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('문 '+Math.max(0,Math.ceil(G.life)), cx, by+barH/2+u*0.012);
+    ctx.fillText(gt.name, cx, by+barH/2+u*0.012);
   }
   // 피격 시 성문 전체가 붉게 번쩍
   if(hurt>0){
-    ctx.globalAlpha=hurt*0.5;
-    ctx.fillStyle='#c8442e';
-    ctx.fillRect(cx-u*0.6, cy-u*0.78, u*1.2, u*1.32);
+    ctx.globalAlpha=hurt*0.5; ctx.fillStyle='#c8442e';
+    ctx.fillRect(cx-bwH, topY, bwH*2, baseB-topY);
     ctx.globalAlpha=1;
   }
   ctx.restore();
@@ -1384,7 +1411,7 @@ function loop(ts){
 }
 
 // ---------- buttons ----------
-$('startBtn').onclick=()=>{ const c=ac(); if(c&&c.state==='suspended')c.resume(); $('overlay').style.display='none'; newGame(); toast('맵: '+curMap.name); startWave(); };
+$('startBtn').onclick=()=>{ const c=ac(); if(c&&c.state==='suspended')c.resume(); $('overlay').style.display='none'; newGame(); toast(curMap.name+' — '+((curMap.gate&&curMap.gate.name)||'성문')+'을 지켜라'); startWave(); };
 function gameOver(){
   G.running=false;
   SND.over();
