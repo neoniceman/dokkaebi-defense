@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="description" content="도깨비 수문장 — 한국 전통 도깨비 테마의 무한 타워디펜스">
+<meta name="theme-color" content="#1d1712">
+<title>도깨비 수문장 — 무한 디펜스</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div id="title">도깨비 수문장<small>무한 디펜스</small></div>
+    <div id="stats">
+      <div class="stat"><span class="lbl">물결</span><b id="hWave">1</b></div>
+      <div class="stat"><span class="lbl">엽전</span><b id="hGold">120</b></div>
+      <div class="stat life"><span class="lbl">문</span><b id="hLife">20</b></div>
+      <div class="stat"><span class="lbl">최고</span><b id="hBest">0</b></div>
+    </div>
+    <button id="soundBtn" title="소리">🔊</button>
+    <button id="codexBtn" title="도감">📖</button>
+  </div>
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div id="toast"></div>
+    <div id="panel">
+      <div class="phead"><span id="pName"></span><span id="pLv"></span></div>
+      <div id="pRows"></div>
+      <div id="pBranch"></div>
+      <div class="pbtns">
+        <button id="pSell" class="pbtn sell"></button>
+        <button id="pClose" class="pbtn close">닫기</button>
+      </div>
+    </div>
+    <div id="cards">
+      <h2>물결을 막아냈다</h2>
+      <p>수문장 하나를 골라 진영에 더하시오</p>
+      <div class="crow" id="crow"></div>
+    </div>
+    <div id="codexMenu">
+      <div class="cmbox">
+        <h2>도감</h2>
+        <button class="cmlink" data-codex="maps">🗺️ 맵 일람<small>다섯 갈래 길</small></button>
+        <button class="cmlink" data-codex="monsters">👹 몬스터 도감<small>아홉 잡귀</small></button>
+        <button class="cmlink" data-codex="towers">🛡️ 수문장 도감<small>다섯 수문장</small></button>
+        <button class="cmclose" id="cmClose">닫기</button>
+      </div>
+    </div>
+    <div id="codexView">
+      <div class="cvbar"><button id="cvBack">‹ 도감</button><span id="cvTitle"></span></div>
+      <iframe id="cvFrame" title="도감"></iframe>
+    </div>
+    <div id="overlay">
+      <h1>도깨비 수문장</h1>
+      <div class="sub">고개를 넘어오는 잡귀를 막아라.<br>빈 땅을 눌러 수문장을 세우고,<br>물결마다 새 힘을 골라 무한히 버텨라.</div>
+      <div id="menuStats">
+        <span>최고 물결 <b id="menuBest">0</b></span>
+        <span>모은 동전 <b id="menuCoins">0</b></span>
+      </div>
+      <button class="btn" id="startBtn">문을 연다</button>
+      <div id="menuRow">
+        <button class="menubtn" id="overlayCodex">📖 도감</button>
+        <button class="menubtn" id="shrineBtn">🏯 도깨비 사당</button>
+      </div>
+    </div>
+    <div id="shrine">
+      <div class="shbox">
+        <div class="shhead"><span>도깨비 사당</span><span class="shcoins">🪙 <b id="shCoins">0</b></span></div>
+        <p class="shdesc">런에서 모은 도깨비 동전으로 영구한 힘을 산다. 죽어도 사라지지 않는다.</p>
+        <div id="shList"></div>
+        <button class="shclose" id="shClose">닫기</button>
+      </div>
+    </div>
+  </div>
+  <div id="tray"></div>
+</div>
+<script src="js/game.js"></script>
+</body>
+</html>

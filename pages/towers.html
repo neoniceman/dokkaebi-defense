@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>도깨비 수문장 — 수문장 도감</title>
+<style>
+  :root{
+    --ink:#241c16; --bone:#f3ead6; --cheong:#2f6f8f; --jeok:#c8442e;
+    --hwang:#e0a82e; --heuk:#1d1712;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:#1d1712; color:var(--bone);
+    font-family:'Gowun Batang','Nanum Myeongjo',ui-serif,Georgia,serif;
+    background-image:radial-gradient(120% 80% at 50% -10%, #3a2c20 0%, #1d1712 60%);}
+  header{text-align:center; padding:30px 20px 6px;}
+  header h1{margin:0; font-size:26px; letter-spacing:.1em; color:var(--hwang); text-shadow:2px 2px 0 #000;}
+  header h1 .b{color:var(--jeok);}
+  header p{margin:8px 0 0; font-size:13px; opacity:.65; letter-spacing:.08em;}
+  .rule{width:60px; height:3px; background:var(--jeok); margin:16px auto 0; border-radius:2px;}
+  .grid{display:grid; gap:20px; padding:24px 18px 50px; max-width:1080px; margin:0 auto;
+    grid-template-columns:repeat(auto-fill,minmax(300px,1fr));}
+  .card{background:var(--bone); border:3px solid var(--ink); border-radius:9px;
+    overflow:hidden; box-shadow:0 8px 0 #00000055; color:var(--ink);
+    display:flex; flex-direction:column; cursor:pointer; transition:transform .1s;}
+  .card:hover{transform:translateY(-4px);}
+  .card .top{display:flex; align-items:center; gap:9px; padding:12px 15px;
+    border-bottom:2px solid var(--ink); background:#efe4ce;}
+  .card .idx{font-size:12px; font-weight:700; color:#fff; background:var(--ink);
+    width:24px; height:24px; border-radius:50%; display:grid; place-items:center; flex:0 0 auto;}
+  .card .nm{font-size:19px; font-weight:700; letter-spacing:.04em;}
+  .card .nm small{display:block; font-size:10px; opacity:.5; letter-spacing:.2em; font-weight:400;}
+  .card .kind{margin-left:auto; font-size:10.5px; letter-spacing:.08em; color:#fff;
+    padding:3px 9px; border-radius:11px;}
+  .portrait{display:flex; align-items:center; justify-content:center; padding:10px 0 4px;
+    background:radial-gradient(60% 80% at 50% 45%, #efe4ce 0%, #e0d2b2 100%); position:relative;}
+  .portrait .play{position:absolute; right:10px; bottom:8px; font-size:11px; color:#7a6a52;
+    background:#fff7e8; border:1.5px solid var(--ink); border-radius:11px; padding:2px 9px;}
+  canvas{display:block;}
+  .desc{padding:11px 15px 4px; font-size:13px; line-height:1.55; color:#4a3c2c;}
+  .cost{padding:0 15px 8px; font-size:12px; color:#9a5b1e; font-weight:700;}
+  .stats{padding:4px 15px 16px;}
+  .branches{margin:0 15px 15px; border-top:2px dashed #00000022; padding-top:11px;}
+  .branches .bhead{font-size:11.5px; font-weight:700; color:#9a5b1e; letter-spacing:.05em;
+    margin-bottom:8px; text-align:center;}
+  .branches .branch{display:flex; flex-direction:column; gap:1px; background:#fff7e8;
+    border:1.5px solid var(--ink); border-radius:7px; padding:7px 10px; margin-bottom:7px;}
+  .branches .branch b{font-size:13px; color:var(--jeok);}
+  .branches .branch span{font-size:11px; color:#5a4a38; line-height:1.4;}
+  .row{display:flex; align-items:center; gap:9px; margin:6px 0; font-size:12px;}
+  .row .lab{width:42px; color:#7a6a52; flex:0 0 auto;}
+  .bar{flex:1; height:9px; background:#d8c9a8; border-radius:5px; overflow:hidden; border:1px solid #00000022;}
+  .bar i{display:block; height:100%; border-radius:5px;}
+  .row .val{width:34px; text-align:right; font-variant-numeric:tabular-nums; color:var(--ink); font-weight:700;}
+  footer{text-align:center; font-size:11px; opacity:.4; padding:0 0 30px;}
+  /* preview modal */
+  #modal{position:fixed; inset:0; background:#1d1712ee; z-index:50; display:none;
+    align-items:center; justify-content:center; padding:18px;}
+  #modal .box{background:var(--bone); border:3px solid var(--ink); border-radius:11px;
+    width:100%; max-width:420px; color:var(--ink); box-shadow:0 12px 0 #00000066; overflow:hidden;}
+  #modal .mhead{display:flex; align-items:center; gap:9px; padding:13px 16px;
+    background:#efe4ce; border-bottom:2px solid var(--ink);}
+  #modal .mhead .mnm{font-size:19px; font-weight:700;}
+  #modal .mhead .mkind{margin-left:auto; font-size:11px; color:#fff; padding:3px 10px; border-radius:11px;}
+  #modal canvas{display:block; width:100%; background:
+    radial-gradient(120% 90% at 50% 0%, #efe4ce 0%, #e3d6ba 60%, #d6c6a4 100%);}
+  #modal .mbranch{display:flex; gap:6px; padding:10px 16px 0; flex-wrap:wrap;}
+  #modal .mbranch button{flex:1; min-width:80px; border:2px solid var(--ink); border-radius:7px;
+    background:#fff7e8; color:var(--ink); font-family:inherit; font-weight:700; font-size:12px;
+    padding:7px 6px; cursor:pointer;}
+  #modal .mbranch button.on{background:var(--hwang); box-shadow:inset 0 0 0 2px #fff7;}
+  #modal .mbranch button small{display:block; font-size:9.5px; font-weight:400; opacity:.7; margin-top:1px;}
+  #modal .mdesc{padding:10px 16px 12px; font-size:13px; line-height:1.55; color:#4a3c2c;}
+  #modal .mclose{display:block; width:100%; border:none; border-top:2px solid var(--ink);
+    background:var(--jeok); color:#fff; font-family:inherit; font-size:15px; font-weight:700;
+    padding:12px; cursor:pointer; letter-spacing:.05em;}
+  #modal .mclose:active{background:#a8351f;}
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="b">도깨비</span> 수문장 · 수문장 도감</h1>
+  <p>고개를 지키는 다섯 수문장 — 8단 강화 후 갈림길까지</p>
+  <div class="rule"></div>
+</header>
+
+<div class="grid" id="grid"></div>
+<footer>도깨비 수문장 — 프로토타입 수문장 도감</footer>
+
+<div id="modal">
+  <div class="box">
+    <div class="mhead"><span class="mnm" id="mNm"></span><span class="mkind" id="mKind"></span></div>
+    <canvas id="mCanvas" width="420" height="280"></canvas>
+    <div class="mbranch" id="mBranch"></div>
+    <div class="mdesc" id="mDesc"></div>
+    <button class="mclose" id="mClose">닫기</button>
+  </div>
+</div>
+
+<script>
+// mirrors TOWERS from the game
+const TOWERS=[
+  { id:'jangseung', name:'장승', read:'JANG-SEUNG', col:'#c8442e', kind:'single', kindLab:'단일', kindCol:'#c8442e',
+    cost:50, range:2.4, rate:0.8, dmg:14,
+    desc:'길목을 지키는 돌장승. 한 번에 한 대상을 묵직하게 명중시키는 기본 수문장.',
+    branches:[{name:'관통', desc:'한 발이 적 2명을 꿰뚫는다.'},{name:'처형', desc:'체력 20% 이하 적을 즉시 처단한다.'}] },
+  { id:'kkachi', name:'까치', read:'KKA-CHI', col:'#2f6f8f', kind:'single', kindLab:'연사', kindCol:'#2f6f8f',
+    cost:70, range:3.0, rate:0.35, dmg:5,
+    desc:'쉴 새 없이 쪼는 까치. 한 방은 약하나 사거리가 길고 공격이 매우 빠르다.',
+    branches:[{name:'연쇄', desc:'명중 시 근처 적에게 한 번 튕긴다.'},{name:'약점', desc:'맞은 적이 받는 다음 피해 +25%.'}] },
+  { id:'bul', name:'불도깨비', read:'BUL-DO-KKAE-BI', col:'#e0a82e', kind:'splash', kindLab:'범위', kindCol:'#e0a82e',
+    cost:90, range:1.9, rate:1.3, dmg:9, splash:1.3,
+    desc:'터지는 화염으로 주변을 함께 태운다. 뭉쳐 오는 무리에게 압도적으로 강하다.',
+    branches:[{name:'화상', desc:'불이 붙어 2초간 지속 피해를 준다.'},{name:'대폭발', desc:'폭발 범위가 크게 넓어진다.'}] },
+  { id:'seori', name:'서리할멈', read:'SEO-RI', col:'#7fb3c8', kind:'slow', kindLab:'둔화', kindCol:'#7fb3c8',
+    cost:80, range:2.6, rate:1.1, dmg:4, slow:0.45, slowT:1.6,
+    desc:'적을 얼려 발을 묶는다. 피해는 작지만 다른 수문장이 처리할 시간을 벌어준다.',
+    branches:[{name:'빙결', desc:'25% 확률로 적을 완전히 얼린다.'},{name:'서리', desc:'둔화가 주변 적에게도 번진다.'}] },
+  { id:'beom', name:'까치호랑이', read:'BEOM', col:'#9a3b22', kind:'single', kindLab:'대물', kindCol:'#9a3b22',
+    cost:140, range:3.2, rate:1.6, dmg:42,
+    desc:'일격필살의 대물 수문장. 느리지만 두꺼운 적도 한 방에 무너뜨린다.',
+    branches:[{name:'방어무시', desc:'적의 방어력을 완전히 무시한다.'},{name:'포효', desc:'처치 시 주변 적에게 피해가 터진다.'}] },
+];
+const MAXDMG=42, MAXRATE=1.6, MAXRANGE=3.2;
+
+// ---- tower drawing (matches game) ----
+function drawTowerAt(ctx,id,col,cx,cy,s,ang){
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.fillStyle='#0003'; ctx.beginPath(); ctx.ellipse(0,s*0.95,s*0.85,s*0.3,0,0,6.28); ctx.fill();
+  ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(2,s*0.09); ctx.lineJoin='round';
+  const t={id, ang:ang, branch:null};
+  const def={col};
+  cxTower(ctx,t,def,s,1);
+  ctx.restore();
+}
+function cxTower(ctx,t,def,s,headScale){
+  const id=t.id, ang=t.ang+Math.PI/2;
+  ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(2,s*0.09); ctx.lineJoin='round';
+  if(id==='jangseung'){
+    // 장승: weathered wooden guardian post with a fierce carved face
+    ctx.fillStyle='#9a7a4a'; ctx.beginPath(); ctx.roundRect(-s*0.42,-s*0.35,s*0.84,s*1.35,5); ctx.fill(); ctx.stroke();
+    ctx.strokeStyle='#7a5e38'; ctx.lineWidth=1.2; ctx.globalAlpha=.5;
+    for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-s*0.3+i*s*0.3,-s*0.25);ctx.lineTo(-s*0.28+i*s*0.3,s*0.9);ctx.stroke();}
+    ctx.globalAlpha=1; ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(2,s*0.09);
+    ctx.fillStyle='#3a2c20'; ctx.beginPath(); ctx.ellipse(0,-s*0.4,s*0.62,s*0.2,0,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.roundRect(-s*0.32,-s*0.72,s*0.64,s*0.36,4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=def.col; ctx.beginPath(); ctx.arc(-s*0.2,-s*0.02,s*0.16,0,6.28); ctx.arc(s*0.2,-s*0.02,s*0.16,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.2,0,s*0.07,0,6.28); ctx.arc(s*0.2,0,s*0.07,0,6.28); ctx.fill();
+    ctx.lineWidth=s*0.08; ctx.beginPath(); ctx.moveTo(-s*0.36,-s*0.2);ctx.lineTo(-s*0.04,-s*0.08); ctx.moveTo(s*0.36,-s*0.2);ctx.lineTo(s*0.04,-s*0.08); ctx.stroke();
+    ctx.fillStyle='#c8442e'; ctx.beginPath(); ctx.moveTo(0,s*0.05);ctx.lineTo(-s*0.1,s*0.35);ctx.lineTo(s*0.1,s*0.35);ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.lineWidth=s*0.06; ctx.beginPath(); ctx.arc(0,s*0.45,s*0.22,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
+  } else if(id==='kkachi'){
+    // 까치: a magpie perched on a small post
+    ctx.fillStyle='#a6824f'; ctx.beginPath(); ctx.roundRect(-s*0.28,s*0.2,s*0.56,s*0.8,3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#2b2b30'; ctx.beginPath(); ctx.ellipse(0,-s*0.1,s*0.5,s*0.62,0,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#f3ead6'; ctx.beginPath(); ctx.ellipse(s*0.06,s*0.05,s*0.28,s*0.4,0,0,6.28); ctx.fill();
+    ctx.fillStyle=def.col; ctx.beginPath(); ctx.ellipse(-s*0.22,-s*0.05,s*0.22,s*0.4,0.3,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.save(); ctx.rotate(t.ang+Math.PI/2);
+    ctx.fillStyle='#2b2b30'; ctx.beginPath(); ctx.arc(0,-s*0.55,s*0.3,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#e0a82e'; ctx.beginPath(); ctx.moveTo(0,-s*1.0);ctx.lineTo(-s*0.12,-s*0.62);ctx.lineTo(s*0.12,-s*0.62);ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#f3ead6'; ctx.beginPath(); ctx.arc(-s*0.12,-s*0.6,s*0.07,0,6.28); ctx.arc(s*0.12,-s*0.6,s*0.07,0,6.28); ctx.fill();
+    ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.12,-s*0.6,s*0.035,0,6.28); ctx.arc(s*0.12,-s*0.6,s*0.035,0,6.28); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='#2b2b30'; ctx.beginPath(); ctx.moveTo(0,s*0.3);ctx.lineTo(-s*0.12,s*0.75);ctx.lineTo(s*0.12,s*0.75);ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if(id==='bul'){
+    // 불도깨비: horned fire-demon head with a flaming mane
+    ctx.save(); ctx.rotate(ang);
+    const fl=0.9+Math.random()*0.2;
+    ctx.fillStyle='#c8442e'; ctx.beginPath();
+    for(let i=0;i<8;i++){const a=i/8*6.28; const rr=s*(0.7+(i%2?0.45:0.2))*fl;
+      ctx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr-s*0.4);} ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#e0a82e'; ctx.beginPath();
+    for(let i=0;i<8;i++){const a=i/8*6.28+0.3; const rr=s*(0.5+(i%2?0.3:0.12))*fl;
+      ctx[i?'lineTo':'moveTo'](Math.cos(a)*rr,Math.sin(a)*rr-s*0.4);} ctx.closePath(); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle='#7a2f1a'; ctx.beginPath(); ctx.arc(0,-s*0.4,s*0.6*headScale,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#3a2c20'; ctx.beginPath();
+    ctx.moveTo(-s*0.4,-s*0.75);ctx.lineTo(-s*0.6,-s*1.25);ctx.lineTo(-s*0.16,-s*0.85);ctx.closePath();
+    ctx.moveTo(s*0.4,-s*0.75);ctx.lineTo(s*0.6,-s*1.25);ctx.lineTo(s*0.16,-s*0.85);ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ffd34d'; ctx.beginPath(); ctx.arc(-s*0.22,-s*0.45,s*0.12,0,6.28); ctx.arc(s*0.22,-s*0.45,s*0.12,0,6.28); ctx.fill();
+    ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.22,-s*0.45,s*0.05,0,6.28); ctx.arc(s*0.22,-s*0.45,s*0.05,0,6.28); ctx.fill();
+    ctx.fillStyle='#f3ead6'; ctx.beginPath();
+    ctx.moveTo(-s*0.12,-s*0.15);ctx.lineTo(-s*0.04,-s*0.02);ctx.lineTo(-s*0.18,-s*0.04);ctx.closePath();
+    ctx.moveTo(s*0.12,-s*0.15);ctx.lineTo(s*0.04,-s*0.02);ctx.lineTo(s*0.18,-s*0.04);ctx.closePath(); ctx.fill();
+  } else if(id==='seori'){
+    // 서리할멈: hooded frost-crone with an icy crown
+    ctx.save(); ctx.rotate(ang);
+    ctx.globalAlpha=.25; ctx.fillStyle='#bfe3f0'; ctx.beginPath(); ctx.arc(0,-s*0.35,s*0.85,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    ctx.fillStyle='#8fb0bf'; ctx.beginPath(); ctx.moveTo(0,-s*0.95);
+    ctx.quadraticCurveTo(s*0.75,-s*0.5,s*0.5,s*0.9); ctx.lineTo(-s*0.5,s*0.9);
+    ctx.quadraticCurveTo(-s*0.75,-s*0.5,0,-s*0.95); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#d8e8ee'; ctx.beginPath(); ctx.arc(0,-s*0.3,s*0.34,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#3a5560'; ctx.beginPath(); ctx.arc(-s*0.12,-s*0.32,s*0.05,0,6.28); ctx.arc(s*0.12,-s*0.32,s*0.05,0,6.28); ctx.fill();
+    ctx.strokeStyle='#5f93a8'; ctx.lineWidth=s*0.04; ctx.beginPath(); ctx.arc(0,-s*0.18,s*0.1,1.05*Math.PI,1.95*Math.PI); ctx.stroke();
+    ctx.fillStyle='#dff1f8'; ctx.strokeStyle='#5f93a8'; ctx.lineWidth=s*0.05;
+    for(let i=-1;i<2;i++){ctx.beginPath();ctx.moveTo(i*s*0.22-s*0.07,-s*0.55);ctx.lineTo(i*s*0.22,-s*0.85);ctx.lineTo(i*s*0.22+s*0.07,-s*0.55);ctx.closePath();ctx.fill();ctx.stroke();}
+    ctx.restore();
+  } else if(id==='beom'){
+    // 까치호랑이: folk-painting tiger head, striped and toothy
+    ctx.save(); ctx.rotate(ang);
+    ctx.fillStyle='#a6824f'; ctx.beginPath(); ctx.roundRect(-s*0.35,s*0.1,s*0.7,s*0.9,4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#e0a050'; ctx.beginPath(); ctx.arc(0,-s*0.3,s*0.66*headScale,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(-s*0.5,-s*0.7,s*0.2,0,6.28); ctx.arc(s*0.5,-s*0.7,s*0.2,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#3a2c20'; ctx.beginPath(); ctx.arc(-s*0.5,-s*0.7,s*0.09,0,6.28); ctx.arc(s*0.5,-s*0.7,s*0.09,0,6.28); ctx.fill();
+    ctx.strokeStyle='#241c16'; ctx.lineWidth=s*0.09; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-s*0.55,-s*0.45);ctx.lineTo(-s*0.32,-s*0.4);
+    ctx.moveTo(s*0.55,-s*0.45);ctx.lineTo(s*0.32,-s*0.4);
+    ctx.moveTo(-s*0.5,-s*0.15);ctx.lineTo(-s*0.28,-s*0.18);
+    ctx.moveTo(s*0.5,-s*0.15);ctx.lineTo(s*0.28,-s*0.18);
+    ctx.moveTo(0,-s*0.95);ctx.lineTo(0,-s*0.7); ctx.stroke();
+    ctx.fillStyle='#f3ead6'; ctx.beginPath(); ctx.ellipse(0,-s*0.02,s*0.34,s*0.26,0,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-s*0.26,-s*0.4,s*0.15,0,6.28); ctx.arc(s*0.26,-s*0.4,s*0.15,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.26,-s*0.38,s*0.07,0,6.28); ctx.arc(s*0.26,-s*0.38,s*0.07,0,6.28); ctx.fill();
+    ctx.fillStyle='#c8442e'; ctx.beginPath(); ctx.moveTo(0,-s*0.1);ctx.lineTo(-s*0.08,-s*0.02);ctx.lineTo(s*0.08,-s*0.02);ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.beginPath();
+    ctx.moveTo(-s*0.1,s*0.08);ctx.lineTo(-s*0.04,s*0.22);ctx.lineTo(-s*0.16,s*0.1);ctx.closePath();
+    ctx.moveTo(s*0.1,s*0.08);ctx.lineTo(s*0.04,s*0.22);ctx.lineTo(s*0.16,s*0.1);ctx.closePath(); ctx.fill();
+    ctx.restore();
+  } else {
+    ctx.fillStyle='#a6824f'; ctx.beginPath();ctx.roundRect(-s*0.5,-s*0.2,s,s*1.2,4);ctx.fill();ctx.stroke();
+    ctx.save(); ctx.rotate(ang);
+    ctx.fillStyle=def.col;ctx.beginPath();ctx.arc(0,-s*0.4,s*0.62*headScale,0,6.28);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#241c16';ctx.beginPath();ctx.arc(-s*0.2,-s*0.45,s*0.1,0,6.28);ctx.arc(s*0.2,-s*0.45,s*0.1,0,6.28);ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawFoe(ctx,cx,cy,s,col,frost){
+  ctx.save(); ctx.translate(cx,cy);
+  ctx.fillStyle='#0003'; ctx.beginPath(); ctx.ellipse(0,s*0.9,s*0.9,s*0.32,0,0,6.28); ctx.fill();
+  ctx.fillStyle=col; ctx.strokeStyle='#241c16'; ctx.lineWidth=Math.max(1.5,s*0.12);
+  ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-s*0.5,-s*0.7); ctx.lineTo(-s*0.7,-s*1.25); ctx.lineTo(-s*0.25,-s*0.85); ctx.closePath();
+  ctx.moveTo(s*0.5,-s*0.7); ctx.lineTo(s*0.7,-s*1.25); ctx.lineTo(s*0.25,-s*0.85); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#f3ead6'; ctx.beginPath(); ctx.arc(-s*0.32,-s*0.1,s*0.22,0,6.28); ctx.arc(s*0.32,-s*0.1,s*0.22,0,6.28); ctx.fill();
+  ctx.fillStyle='#241c16'; ctx.beginPath(); ctx.arc(-s*0.30,-s*0.06,s*0.10,0,6.28); ctx.arc(s*0.34,-s*0.06,s*0.10,0,6.28); ctx.fill();
+  if(frost){ ctx.globalAlpha=.45; ctx.fillStyle='#bfe3f0'; ctx.beginPath(); ctx.arc(0,0,s,0,6.28); ctx.fill(); ctx.globalAlpha=1; }
+  ctx.restore();
+}
+
+// ---- portrait (static) ----
+function drawPortrait(canvas, t){
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawTowerAt(ctx,t.id,t.col,canvas.width/2,canvas.height/2+18,40,0);
+}
+
+// ---- interactive preview animation ----
+let anim=null;
+let curBr=null;       // currently demonstrated branch (null = base)
+function openPreview(t){
+  const modal=document.getElementById('modal');
+  document.getElementById('mNm').innerHTML=t.name+' <small style="font-weight:400;opacity:.5;font-size:11px;letter-spacing:.15em">'+t.read+'</small>';
+  const k=document.getElementById('mKind'); k.textContent=t.kindLab; k.style.background=t.kindCol;
+  modal.style.display='flex';
+  // branch toggle row: 기본 + two branches
+  curBr=null;
+  const brBox=document.getElementById('mBranch');
+  const brIds=['pierce|execute','chain|mark','burn|blast','freeze|spread','sunder|roar'];
+  const map={jangseung:0,kkachi:1,bul:2,seori:3,beom:4};
+  const ids=brIds[map[t.id]].split('|');
+  let btns='<button data-br="" class="on">기본</button>';
+  t.branches.forEach((b,i)=>{ btns+='<button data-br="'+ids[i]+'"><b>'+b.name+'</b></button>'; });
+  brBox.innerHTML=btns;
+  function setDesc(){
+    if(!curBr){ document.getElementById('mDesc').textContent=t.desc; }
+    else { const idx=ids.indexOf(curBr); document.getElementById('mDesc').textContent='⚜ '+t.branches[idx].name+' — '+t.branches[idx].desc; }
+  }
+  brBox.querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{ curBr=b.getAttribute('data-br')||null;
+      brBox.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      b.classList.add('on'); setDesc(); };
+  });
+  setDesc();
+  const cv=document.getElementById('mCanvas'), ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  const tx=W*0.5, ty=H*0.70;               // tower position
+  const laneY=H*0.40;                       // enemy lane
+  const rangePx=t.range*52;                 // range in px (cell≈52)
+  let foes=[]; let spawnT=0;
+  let bullets=[]; let parts=[]; let floats=[];
+  let cd=0; let last=performance.now();
+  // enemies now have hp so kills/execute/roar are visible
+  const FOE_HP=60;
+  function spawn(){ foes.push({x:-20, hp:FOE_HP, max:FOE_HP, frost:0, burn:0, burnT:0, mark:0, dead:false}); }
+  function resetDemo(){ foes=[]; bullets=[]; parts=[]; floats=[]; spawnT=0; cd=0; }
+  function popText(x,y,txt,col){ floats.push({x,y,txt,col,t:0,life:0.7}); }
+  function hitFoe(f,dmg,extra){
+    extra=extra||{};
+    if(f.mark>0){ dmg*=1.25; f.mark=0; }
+    f.hp-=dmg;
+    if(f.hp<=0 && !f.dead){
+      f.dead=true;
+      // 포효: roar burst on kill
+      if(extra.roar){ popText(f.x,laneY-22,'포효!','#9a3b22');
+        for(const o of foes){ if(o.dead||o===f)continue;
+          if(Math.abs(o.x-f.x)<=70){ o.hp-=999; o.dead=true; sparkle(o.x,laneY,'#9a3b22',8); } } }
+      sparkle(f.x,laneY,'#c8442e',10);
+    }
+  }
+  function sparkle(x,y,col,n){ for(let i=0;i<n;i++){const a=Math.random()*6.28,s2=30+Math.random()*70;
+    parts.push({x,y,vx:Math.cos(a)*s2,vy:Math.sin(a)*s2-20,t:0,life:0.4,col});} }
+  function frame(now){
+    const dt=Math.min(0.05,(now-last)/1000); last=now;
+    ctx.clearRect(0,0,W,H);
+    // range ring
+    ctx.globalAlpha=.12; ctx.fillStyle=t.kindCol;
+    ctx.beginPath(); ctx.arc(tx,ty,rangePx,0,6.28); ctx.fill(); ctx.globalAlpha=1;
+    ctx.globalAlpha=.4; ctx.strokeStyle=t.kindCol; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.arc(tx,ty,rangePx,0,6.28); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+    // lane line
+    ctx.strokeStyle='#c2a87555'; ctx.lineWidth=30; ctx.beginPath(); ctx.moveTo(0,laneY); ctx.lineTo(W,laneY); ctx.stroke();
+    // spawn — closer spacing so pierce/chain/roar have neighbors to hit
+    // keep only a few foes on screen so the branch effect stays legible
+    const multi=(curBr==='pierce'||curBr==='chain'||curBr==='roar'||curBr==='spread'||curBr==='blast');
+    const cap=multi?3:2;
+    const alive=foes.filter(f=>!f.dead).length;
+    spawnT-=dt; if(spawnT<=0 && alive<cap){ spawn(); spawnT=multi?0.7:1.3; }
+    // move foes
+    const sp=34;
+    for(const f of foes){
+      if(f.dead)continue;
+      let v=sp; if(f.frost>0){ f.frost-=dt; v*= (curBr==='freeze'&&f.frozen)?0:(t.slow||1); if(f.frost<=0)f.frozen=false; }
+      // burn DoT
+      if(f.burn>0){ f.burnT-=dt; f.hp-=f.burnDmg*dt; if(f.burnT<=0)f.burn=0;
+        if(f.hp<=0&&!f.dead){f.dead=true; sparkle(f.x,laneY,'#e0612e',8);} }
+      f.x+=v*dt;
+    }
+    foes=foes.filter(f=>f.x<W+30 && !f.dead);
+    // tower targeting: furthest-in-range living foe
+    let tgt=null, bd=1e9;
+    for(const f of foes){ if(f.dead)continue; const d=Math.hypot(f.x-tx,laneY-ty);
+      if(d<=rangePx && f.x<bd){bd=f.x;tgt=f;} }
+    let ang=-Math.PI/2;
+    if(tgt) ang=Math.atan2(laneY-ty, tgt.x-tx);
+    cd-=dt;
+    if(tgt && cd<=0){
+      cd=Math.max(t.rate, 0.5);   // floor cadence so fast towers don't blur
+      bullets.push({x:tx,y:ty-20,tx:tgt.x,ty:laneY,t:0,ref:tgt});
+    }
+    // bullets
+    const DMG=10;
+    for(const b of bullets){
+      b.t+=dt/0.16; b.x=tx+(b.tx-tx)*Math.min(1,b.t); b.y=(ty-20)+(b.ty-(ty-20))*Math.min(1,b.t);
+      if(b.t>=1){ b.done=true; const e=b.ref;
+        if(t.kind==='splash'){
+          let R=46; if(curBr==='blast')R*=1.7;
+          for(const f of foes){ if(f.dead)continue;
+            if(Math.hypot(f.x-b.tx, laneY-b.ty)<=R){ hitFoe(f,DMG,{});
+              if(curBr==='burn'){ f.burn=1; f.burnT=2.5; f.burnDmg=DMG*0.9; } } }
+          sparkle(b.tx,b.ty,t.col,curBr==='blast'?16:10);
+          if(curBr==='blast'){ ctx.globalAlpha=.2; ctx.fillStyle=t.col;
+            ctx.beginPath(); ctx.arc(b.tx,b.ty,R,0,6.28); ctx.fill(); ctx.globalAlpha=1; }
+        } else if(e && !e.dead){
+          // execute
+          if(curBr==='execute' && e.hp/e.max<=0.4){ e.hp=0; e.dead=true; popText(e.x,laneY-22,'처형!','#c8442e'); sparkle(e.x,laneY,'#c8442e',12); }
+          else {
+            hitFoe(e, DMG, {roar:curBr==='roar'});
+            if(curBr==='mark' && !e.dead){ e.mark=1; popText(e.x,laneY-22,'약점','#9a5b1e'); }
+          }
+          // slow tower base effect
+          if(t.kind==='slow' && !e.dead){
+            e.frost=t.slowT;
+            if(curBr==='freeze' && Math.random()<0.6){ e.frozen=true; e.frost=Math.max(e.frost,1.6); popText(e.x,laneY-22,'빙결!','#2f6f8f'); }
+            if(curBr==='spread'){ for(const o of foes){ if(o.dead||o===e)continue;
+              if(Math.abs(o.x-e.x)<=60){ o.frost=t.slowT; } } }
+          }
+          // pierce: hit one behind
+          if(curBr==='pierce'){ let second=null,bx=-1;
+            for(const o of foes){ if(o.dead||o===e)continue;
+              if(Math.abs(o.x-e.x)<=60 && o.x>bx){bx=o.x;second=o;} }
+            if(second){ hitFoe(second,DMG,{}); popText(e.x,laneY+24,'관통','#9a3b22'); } }
+          // chain: bounce to nearest
+          if(curBr==='chain'){ let near=null,nd=1e9;
+            for(const o of foes){ if(o.dead||o===e)continue;
+              const d=Math.abs(o.x-e.x); if(d<=80&&d<nd){nd=d;near=o;} }
+            if(near){ hitFoe(near,DMG*0.7,{}); 
+              ctx.strokeStyle=t.col; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(e.x,laneY); ctx.lineTo(near.x,laneY); ctx.stroke();
+              sparkle(near.x,laneY,t.col,4); } }
+          sparkle(b.tx,b.ty,t.col,5);
+        }
+      }
+    }
+    bullets=bullets.filter(b=>!b.done);
+    for(const p of parts){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=120*dt; }
+    parts=parts.filter(p=>p.t<p.life);
+    for(const fl of floats){ fl.t+=dt; fl.y-=22*dt; }
+    floats=floats.filter(fl=>fl.t<fl.life);
+    // draw foes (with hp bar, frost/burn tint)
+    for(const f of foes){ if(f.dead)continue;
+      drawFoe(ctx,f.x,laneY,16,'#6b5d8a',f.frost>0);
+      if(f.burn>0){ ctx.globalAlpha=.35; ctx.fillStyle='#e0612e';
+        ctx.beginPath(); ctx.arc(f.x,laneY,15,0,6.28); ctx.fill(); ctx.globalAlpha=1; }
+      if(f.mark>0){ ctx.strokeStyle='#9a5b1e'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.arc(f.x,laneY,18,0,6.28); ctx.stroke(); }
+      if(f.hp<f.max){ const w=28; ctx.fillStyle='#0006'; ctx.fillRect(f.x-w/2,laneY-24,w,4);
+        ctx.fillStyle='#7ec46a'; ctx.fillRect(f.x-w/2,laneY-24,w*Math.max(0,f.hp/f.max),4); } }
+    // bullets
+    ctx.fillStyle=t.col; for(const b of bullets){ ctx.beginPath(); ctx.arc(b.x,b.y,4,0,6.28); ctx.fill(); }
+    // tower
+    drawTowerAt(ctx,t.id,t.col,tx,ty,30,ang);
+    for(const p of parts){ const a=1-p.t/p.life; ctx.globalAlpha=Math.max(0,a); ctx.fillStyle=p.col; ctx.fillRect(p.x-2,p.y-2,4,4);} ctx.globalAlpha=1;
+    // floating labels
+    ctx.textAlign='center'; ctx.font='bold 13px sans-serif';
+    for(const fl of floats){ const a=1-fl.t/fl.life; ctx.globalAlpha=Math.max(0,a);
+      ctx.fillStyle='#fff'; ctx.strokeStyle=fl.col; ctx.lineWidth=3;
+      ctx.strokeText(fl.txt,fl.x,fl.y); ctx.fillText(fl.txt,fl.x,fl.y); } ctx.globalAlpha=1;
+    anim=requestAnimationFrame(frame);
+  }
+  cancelAnimationFrame(anim);
+  anim=requestAnimationFrame(frame);
+}
+function closePreview(){ cancelAnimationFrame(anim); anim=null; document.getElementById('modal').style.display='none'; }
+document.getElementById('mClose').onclick=closePreview;
+document.getElementById('modal').onclick=(e)=>{ if(e.target.id==='modal') closePreview(); };
+
+function statRow(lab,val,max,col,suffix){
+  const pct=Math.round(val/max*100);
+  return '<div class="row"><span class="lab">'+lab+'</span>'+
+    '<span class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></span>'+
+    '<span class="val">'+val+(suffix||'')+'</span></div>';
+}
+
+const grid=document.getElementById('grid');
+TOWERS.forEach((t,i)=>{
+  const card=document.createElement('div'); card.className='card';
+  // attack speed shown as shots/sec for intuition (higher=faster)
+  const sps=(1/t.rate).toFixed(1);
+  card.innerHTML=
+    '<div class="top"><span class="idx">'+(i+1)+'</span>'+
+      '<span class="nm">'+t.name+'<small>'+t.read+'</small></span>'+
+      '<span class="kind" style="background:'+t.kindCol+'">'+t.kindLab+'</span></div>'+
+    '<div class="portrait"><canvas width="220" height="150"></canvas><span class="play">▶ 눌러서 보기</span></div>'+
+    '<div class="desc">'+t.desc+'</div>'+
+    '<div class="cost">엽전 '+t.cost+'</div>'+
+    '<div class="stats">'+
+      statRow('피해', t.dmg, MAXDMG, '#c8442e')+
+      statRow('공속', +sps, (1/0.35), '#2f6f8f', '/초')+
+      statRow('사거리', t.range, MAXRANGE, '#5d7a4f')+
+    '</div>'+
+    '<div class="branches"><div class="bhead">⚜ 8단 강화 후 갈림길</div>'+
+      t.branches.map(b=>'<div class="branch"><b>'+b.name+'</b><span>'+b.desc+'</span></div>').join('')+
+    '</div>';
+  grid.appendChild(card);
+  drawPortrait(card.querySelector('canvas'), t);
+  card.onclick=()=>openPreview(t);
+});
+</script>
+</body>
+</html>
