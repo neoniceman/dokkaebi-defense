@@ -4,7 +4,7 @@ const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
 
 // ---------- sprite assets (CraftPix · Tower Defense 2D Game Kit) ----------
-const IMG={}, ESPRITE={}; let FX_BURST=[]; let _imgPending=0;
+const IMG={}, ESPRITE={}, UNIT={}; let FX_BURST=[]; let _imgPending=0;
 function _img(src){ const im=new Image(); _imgPending++;
   im.onload=im.onerror=()=>{ _imgPending--; }; im.src=src; return im; }
 function loadAssets(){
@@ -13,8 +13,12 @@ function loadAssets(){
   IMG.arrow=_img('assets/fx/arrow.png');
   IMG.ice=_img('assets/fx/ice.png');
   IMG.fireball=_img('assets/fx/fireball.png');
-  IMG.u_archer=_img('assets/units/archer.png');
-  IMG.u_knight=_img('assets/units/knight.png');
+  // 애니메이션 방어 유닛 (직업별 idle + attack 프레임)
+  ['archer','elf','wizard','wizard2','viking','druid','ent'].forEach(k=>{
+    UNIT[k]={idle:[],atk:[]};
+    for(let i=0;i<10;i++){ UNIT[k].idle[i]=_img('assets/units/'+k+'/idle/f'+i+'.png');
+      UNIT[k].atk[i]=_img('assets/units/'+k+'/atk/f'+i+'.png'); }
+  });
   const EFRAMES={goblin:10,brute:10,orc:10,imp:10,ogre:10,darkgob:10,king:10,bat:10,yeti:10,axer:10,
     mage:20,steel:20,dknight:10,swordsman:10,
     boss:10,boss2:10,boss3:20,boss4:20};
@@ -189,19 +193,19 @@ function posAt(dist){
 
 // ---------- tower defs ----------
 const TOWERS={
-  jangseung:{name:'궁수탑',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',unit:'u_archer',
+  jangseung:{name:'궁수탑',cost:50,range:2.4,rate:0.8,dmg:14,col:'#c8442e',kind:'single',unlocked:true,sprite:'t_archer',unit:'archer',
     desc:'길목을 지키는 궁수. 단일 대상 명중.'},
-  kkachi:{name:'석궁탑',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',unit:'u_knight',
+  kkachi:{name:'석궁탑',cost:70,range:3.0,rate:0.35,dmg:5,col:'#2f6f8f',kind:'single',unlocked:true,sprite:'t_ballista',unit:'elf',
     desc:'빠른 연사. 약하지만 끊임없이 쏜다.'},
-  bul:{name:'흑마법탑',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',
+  bul:{name:'흑마법탑',cost:90,range:1.9,rate:1.3,dmg:9,col:'#e0a82e',kind:'splash',splash:1.3,unlocked:false,sprite:'t_dark',unit:'wizard',
     desc:'범위 화염 마법. 뭉친 무리에 강하다.'},
-  seori:{name:'빙결탑',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',
+  seori:{name:'빙결탑',cost:80,range:2.6,rate:1.1,dmg:4,col:'#7fb3c8',kind:'slow',slow:0.45,slowT:1.6,unlocked:false,sprite:'t_frost',unit:'druid',
     desc:'적을 얼려 둔화. 피해는 적다.'},
-  beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'u_knight',
+  beom:{name:'전사 병영',cost:140,range:3.2,rate:1.6,dmg:42,col:'#9a3b22',kind:'single',unlocked:false,sprite:'t_camp',unit:'viking',
     desc:'일격필살의 대물. 느리지만 묵직하다.'},
-  arcane:{name:'비전 마법탑',cost:120,range:3.5,rate:1.4,dmg:55,col:'#b48a3a',kind:'single',unlocked:false,sprite:'t_arcane',
+  arcane:{name:'비전 마법탑',cost:120,range:3.5,rate:1.4,dmg:55,col:'#b48a3a',kind:'single',unlocked:false,sprite:'t_arcane',unit:'wizard2',
     desc:'먼 거리 고위력 비전 마법. 느린 저격형.'},
-  cannon:{name:'포탑',cost:110,range:2.6,rate:1.8,dmg:30,col:'#7a4a2a',kind:'splash',splash:1.5,unlocked:false,sprite:'t_cannon',
+  cannon:{name:'포탑',cost:110,range:2.6,rate:1.8,dmg:30,col:'#7a4a2a',kind:'splash',splash:1.5,unlocked:false,sprite:'t_cannon',unit:'ent',
     desc:'느리지만 강력한 범위 포격.'},
 };
 const ORDER=['jangseung','kkachi','bul','seori','beom','arcane','cannon'];
@@ -421,7 +425,7 @@ function update(dt){
     const def=TOWERS[t.id];
     const st=towerStat(t);
     t.cd-=dt;
-    if(t.atk>0) t.atk-=dt/0.18;   // 공격 모션 감쇠 (~0.18초)
+    if(t.atk>0) t.atk-=dt/0.45;   // 공격 애니메이션 진행 (~0.45초)
     const rng=st.range*CELL*G.buffs.range;
     // target = furthest along path in range
     let tgt=null,bd=-1;
@@ -1141,31 +1145,31 @@ function drawTower(t){
     ctx.globalAlpha=1; ctx.restore();
   }
   ctx.save();ctx.translate(cx,cy);
-  ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(0,s*0.95,s*0.85,s*0.3,0,0,6.28);ctx.fill();
-  const tim=IMG[def.sprite];
-  if(imgReady(tim)){
-    const h=CELL*1.12, w=h*(tim.naturalWidth/tim.naturalHeight);
-    ctx.drawImage(tim, -w/2, -h*0.68, w, h);
-    // 타워 위에 사수(인간형 유닛) 합성 — 목표 방향을 바라봄
-    const uim=IMG[def.unit];
-    if(uim && imgReady(uim)){
-      const uh=CELL*0.78, uw=uh*(uim.naturalWidth/uim.naturalHeight);
-      const atk=Math.max(0,t.atk||0);              // 1(방금 발사)→0(평상시)
-      ctx.save();
-      ctx.translate(0,-CELL*0.46);                 // 타워 상단 플랫폼에 발이 닿도록
-      // 살짝 그림자
-      ctx.globalAlpha=.25; ctx.fillStyle='#000';
-      ctx.beginPath(); ctx.ellipse(0,0,uw*0.34,uh*0.1,0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
-      const flip = Math.cos(t.ang||0)>0;
-      if(flip) ctx.scale(-1,1);                     // 적이 오른쪽이면 좌우 반전
-      // ---- 공격 모션: 발사 순간 뒤로 움찔(반동) → 스프링백 + 살짝 들썩 ----
-      const kick=Math.sin(atk*Math.PI);            // 0→1→0 (중간에 최대)
-      ctx.translate(-atk*uw*0.16, -kick*uh*0.05);  // 뒤로 반동 + 살짝 위로
-      ctx.rotate(-atk*0.18);                        // 뒤로 젖힘
-      ctx.drawImage(uim, -uw/2, -uh*0.86, uw, uh);
+  // 바닥 그림자 + 작은 돌 받침(캐릭터가 떠 보이지 않게)
+  ctx.fillStyle='#00000033'; ctx.beginPath(); ctx.ellipse(0,CELL*0.34,CELL*0.34,CELL*0.12,0,0,6.28); ctx.fill();
+  ctx.fillStyle='#6b6258'; ctx.beginPath(); ctx.ellipse(0,CELL*0.32,CELL*0.32,CELL*0.12,0,0,6.28); ctx.fill();
+  ctx.fillStyle='#837a6e'; ctx.beginPath(); ctx.ellipse(0,CELL*0.30,CELL*0.30,CELL*0.11,0,0,6.28); ctx.fill();
+  // ---- 애니메이션 방어 유닛 (건물 대신 캐릭터: 평상시 idle, 발사 시 attack) ----
+  const U=UNIT[def.unit];
+  if(U && U.idle.length){
+    const atk=Math.max(0,t.atk||0);              // 1(방금 발사)→0
+    let frames, idx;
+    if(atk>0){ frames=U.atk; idx=Math.min(frames.length-1, Math.floor((1-atk)*frames.length)); }
+    else { frames=U.idle; idx=Math.floor(performance.now()/120 + (t.c*3+t.r))%frames.length; }
+    const im=frames[idx];
+    if(imgReady(im)){
+      const dh=CELL*2.4, dw=dh*(im.naturalWidth/im.naturalHeight);
+      const flip=Math.cos(t.ang||0)>0;           // 적이 오른쪽이면 좌우 반전
+      ctx.save(); if(flip) ctx.scale(-1,1);
+      ctx.drawImage(im, -dw/2, -dh*0.66, dw, dh);
       ctx.restore();
     }
-  } else drawTowerBody(t,def,s,headScale);
+  } else {
+    // fallback: 옛 타워 건물
+    const tim=IMG[def.sprite];
+    if(imgReady(tim)){ const h=CELL*1.12, w=h*(tim.naturalWidth/tim.naturalHeight); ctx.drawImage(tim, -w/2, -h*0.68, w, h); }
+    else drawTowerBody(t,def,s,headScale);
+  }
   // branch rune above head — marks a tower that chose a path
   if(t.branch){
     const ry=-s*1.05;
