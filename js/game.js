@@ -83,16 +83,16 @@ const toast=(m)=>{const t=$('toast');t.textContent=m;t.style.opacity=1;clearTime
 
 // ---------- meta progression (permanent, saved) ----------
 const META_UP={
-  gold:{name:'두둑한 곳간', max:5, baseCost:8, step:1.6,
+  gold:{name:'왕국의 금고', max:5, baseCost:8, step:1.6,
     desc:l=>'시작 금화 +'+(l*25)+' (현재 '+(120+l*25)+')',
     eff:l=>({startGold:l*25})},
-  life:{name:'굳건한 성문', max:5, baseCost:10, step:1.7,
+  life:{name:'견고한 성벽', max:5, baseCost:10, step:1.7,
     desc:l=>'시작 생명 +'+(l*3)+' (현재 '+(20+l*3)+')',
     eff:l=>({startLife:l*3})},
-  dmg:{name:'벼린 무기', max:5, baseCost:12, step:1.7,
+  dmg:{name:'벼린 검날', max:5, baseCost:12, step:1.7,
     desc:l=>'모든 방어탑 피해 +'+(l*5)+'%',
     eff:l=>({dmgMul:1+l*0.05})},
-  coin:{name:'복을 부르는 부적', max:5, baseCost:10, step:1.6,
+  coin:{name:'행운의 부적', max:5, baseCost:10, step:1.6,
     desc:l=>'런 종료 시 보석 +'+(l*15)+'%',
     eff:l=>({coinMul:1+l*0.15})},
 };
@@ -379,7 +379,8 @@ function syncTray(){
     const t=TOWERS[id];
     const b=document.createElement('div');
     b.className='twrbtn'+(t.unlocked?'':' locked')+(G&&G.sel===id?' sel':'');
-    b.innerHTML=towerSVG(id,38)+'<div class="nm">'+t.name+'</div><div class="cost">'+(t.unlocked?('금화 '+t.cost):'잠김')+'</div>';
+    b.innerHTML='<img src="assets/units/'+t.unit+'/icon.png" style="width:42px;height:42px;object-fit:contain;display:block;margin:0 auto 3px" alt="">'+
+      '<div class="nm">'+t.name+'</div><div class="cost">'+(t.unlocked?('금화 '+t.cost):'잠김')+'</div>';
     b.onclick=()=>{ if(!t.unlocked){toast('아직 잠긴 방어탑');return;}
       G.sel=(G.sel===id?null:id); closePanel(); syncTray(); };
     tray.appendChild(b);
@@ -430,7 +431,7 @@ function update(dt){
     const def=TOWERS[t.id];
     const st=towerStat(t);
     t.cd-=dt;
-    if(t.atk>0) t.atk-=dt/0.45;   // 공격 애니메이션 진행 (~0.45초)
+    if(t.atk>0) t.atk-=dt/0.3;   // 공격 애니메이션(~0.3초)→끝나면 대기(idle)
     const rng=st.range*CELL*G.buffs.range;
     // target = furthest along path in range
     let tgt=null,bd=-1;
@@ -619,11 +620,11 @@ function endWave(){
   showCards();
 }
 const CARDPOOL=[
-  {t:'예리한 부적',d:'모든 방어탑 피해 +10%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.10},
-  {t:'바람 신발',d:'모든 방어탑 공격속도 +8%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.08},
-  {t:'천리안',d:'모든 방어탑 사거리 +8%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.08},
-  {t:'금화 주머니',d:'처치 보상 +15%, 금화 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.15;G.gold+=40;}},
-  {t:'성벽 보수',d:'성문 생명 +6 회복',tag:'수호',rare:0,svg:'life',act:()=>{G.life+=6;}},
+  {t:'화염의 룬',d:'모든 방어탑 피해 +10%',tag:'강화',rare:0,svg:'dmg',act:()=>G.buffs.dmg*=1.10},
+  {t:'질풍의 룬',d:'모든 방어탑 공격속도 +8%',tag:'강화',rare:0,svg:'rate',act:()=>G.buffs.rate*=1.08},
+  {t:'매의 시야',d:'모든 방어탑 사거리 +8%',tag:'강화',rare:0,svg:'range',act:()=>G.buffs.range*=1.08},
+  {t:'황금 주머니',d:'처치 보상 +15%, 금화 40 즉시',tag:'재화',rare:0,svg:'gold',act:()=>{G.buffs.gold*=1.15;G.gold+=40;}},
+  {t:'성벽 강화',d:'성벽 생명 +6 회복',tag:'수호',rare:0,svg:'life',act:()=>{G.life+=6;}},
 ];
 function unlockCard(id){const t=TOWERS[id];return {t:t.name+' 해금',d:t.desc,tag:'방어탑',rare:1,svg:id,act:()=>{t.unlocked=true;syncTray();}};}
 function showCards(){
@@ -1369,7 +1370,7 @@ function renderPanel(){
     bhtml='<div class="brdone">⚜ '+chosen.name+'<small>'+chosen.desc+'</small></div>';
   } else if(canChooseBranch(t)){
     const cost=branchCost(t);
-    bhtml='<div class="brhead">길을 정하라 · 🪙'+cost+'</div><div class="brrow">'+
+    bhtml='<div class="brhead">길을 정하라 · 💎'+cost+'</div><div class="brrow">'+
       branches.map(x=>'<button class="brbtn" data-br="'+x.id+'"'+(G.gold<cost?' disabled':'')+'>'+
         '<b>'+x.name+'</b><small>'+x.desc+'</small></button>').join('')+'</div>';
   } else {
@@ -1458,7 +1459,7 @@ function renderShrine(){
     const item=document.createElement('div'); item.className='shitem';
     let btn;
     if(cost==null) btn='<button class="sbuy max" disabled>최대 단계</button>';
-    else btn='<button class="sbuy" data-k="'+k+'"'+(META.coins<cost?' disabled':'')+'>🪙 '+cost+' 강화</button>';
+    else btn='<button class="sbuy" data-k="'+k+'"'+(META.coins<cost?' disabled':'')+'>💎 '+cost+' 강화</button>';
     item.innerHTML='<div class="sit"><span class="sname">'+u.name+'</span>'+
       '<span class="slv">'+lv+' / '+u.max+'</span></div>'+
       '<div class="sd">'+u.desc(lv)+'</div>'+btn;
@@ -1514,7 +1515,7 @@ function gameOver(){
   const ov=$('overlay');
   ov.innerHTML='<h1>성문이 뚫렸다</h1>'+
     '<div class="big">물결 '+G.wave+'까지 버텼다 · 최고 '+G.best+'</div>'+
-    '<div class="sub">마물이 성문을 넘었다.<br>보석 <b style="color:#e0a82e">🪙 '+earned+'</b>을 모았다.</div>'+
+    '<div class="sub">마물이 성문을 넘었다.<br>보석 <b style="color:#e0a82e">💎 '+earned+'</b>을 모았다.</div>'+
     '<button class="btn" id="againBtn">다시 문을 연다</button>'+
     '<div id="menuRow">'+
       '<button class="menubtn" id="overlayCodex">📖 도감</button>'+
