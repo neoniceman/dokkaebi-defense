@@ -247,7 +247,7 @@ function canChooseBranch(t){ return !t.branch && totalLevels(t)>=BRANCH_REQ; }
 let G;
 function newGame(){
   const me=metaEffects();
-  G={gold:120+me.startGold, life:20+me.startLife, wave:0, running:true, inWave:false,
+  G={gold:120+me.startGold, life:20+me.startLife, maxLife:20+me.startLife, wave:0, running:true, inWave:false,
     towers:[],enemies:[],bullets:[],particles:[],
     spawnQ:[],spawnT:0, sel:null, panelT:null,
     buffs:{dmg:me.dmgMul, rate:1, range:1, gold:1},
@@ -348,6 +348,7 @@ function placeAt(px,py){
 // ---------- combat ----------
 function update(dt){
   if(!G.running)return;
+  if(G.gateHurt>0) G.gateHurt-=dt;   // 성문 피격 번쩍임 감쇠
   // spawn
   if(G.inWave){
     G.spawnT-=dt;
@@ -361,7 +362,7 @@ function update(dt){
     const sp=e.spd*e.slowF*(CELL/SPD_REF); // 속도를 셀 크기에 비례 → 화면 커져도 일관
     e.dist+=sp*dt;
     const p=posAt(e.dist); e.x=p.x; e.y=p.y; e.ang=p.ang;
-    if(e.dist>=PLEN){ e.dead=true; G.life-=(e.boss?5:1); spawnHit(e.x,e.y,'#c8442e',e.boss?12:6); SND.hurtLife();
+    if(e.dist>=PLEN){ e.dead=true; G.life-=(e.boss?5:1); G.gateHurt=0.45; spawnHit(e.x,e.y,'#c8442e',e.boss?12:6); SND.hurtLife(); updateHUD();
       if(G.life<=0){gameOver();return;} }
   }
   // towers fire
@@ -683,6 +684,7 @@ function strokePath(){ctx.beginPath();ctx.moveTo(WP[0].x,WP[0].y);for(let i=1;i<
 function drawGate(g){
   const u=CELL, cx=g.x, cy=g.y;
   ctx.save(); ctx.lineJoin='round'; ctx.lineCap='round';
+  const hurt=(G&&G.gateHurt>0)?G.gateHurt/0.45:0;   // 피격 번쩍임 세기 0~1
   // ----- 석축 (stone base wall) -----
   const baseT=cy-u*0.16, baseB=cy+u*0.52, twH=u*0.44, bwH=u*0.52;
   ctx.beginPath();
@@ -730,6 +732,27 @@ function drawGate(g){
   ctx.fillStyle='#20252e';                                       // 치미(양끝 장식)
   ctx.beginPath(); ctx.arc(cx-RHW,ty,u*0.045,0,6.28); ctx.fill();
   ctx.beginPath(); ctx.arc(cx+RHW,ty,u*0.045,0,6.28); ctx.fill();
+  // ----- 성문 체력 게이지 (지붕 위, 충돌 시 줄어듦) -----
+  if(G && G.maxLife){
+    const denom=Math.max(G.maxLife,G.life,1), rat=Math.max(0,Math.min(1,G.life/denom));
+    const barW=u*1.18, barH=Math.max(4,u*0.16);
+    const bx=cx-barW/2, by=Math.max(OY+3, cy-u*1.12);
+    ctx.fillStyle='#1d1712'; ctx.fillRect(bx-2,by-2,barW+4,barH+4);     // 테두리
+    ctx.fillStyle='#3a2c20'; ctx.fillRect(bx,by,barW,barH);            // 빈 게이지
+    ctx.fillStyle=rat>0.5?'#6fbf52':rat>0.25?'#e0a82e':'#c8442e';      // 잔량 색
+    ctx.fillRect(bx,by,barW*rat,barH);
+    ctx.fillStyle='#ffffff33'; ctx.fillRect(bx,by,barW*rat,barH*0.4);  // 광택
+    ctx.fillStyle='#f3ead6'; ctx.font='bold '+Math.round(u*0.18)+'px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('문 '+Math.max(0,Math.ceil(G.life)), cx, by+barH/2+u*0.012);
+  }
+  // 피격 시 성문 전체가 붉게 번쩍
+  if(hurt>0){
+    ctx.globalAlpha=hurt*0.5;
+    ctx.fillStyle='#c8442e';
+    ctx.fillRect(cx-u*0.6, cy-u*0.78, u*1.2, u*1.32);
+    ctx.globalAlpha=1;
+  }
   ctx.restore();
 }
 
