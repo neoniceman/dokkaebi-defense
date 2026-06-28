@@ -931,10 +931,10 @@ function drawEnemy(e){
   if(e.mark>0){ctx.strokeStyle='#9a5b1e';ctx.lineWidth=s*0.1;
     ctx.beginPath();ctx.arc(0,0,s*1.15,0,6.28);ctx.stroke();ctx.strokeStyle='#241c16';}
   ctx.restore();
-  // hp bar (boss gets a thicker one)
-  if(e.hp<e.max){const w=s*2,hb=Math.max(3,s*(e.boss?0.22:0.18));
-    ctx.fillStyle='#0006';ctx.fillRect(e.x-w/2,e.y-s-hb-3,w,hb);
-    ctx.fillStyle=e.boss?'#e0a82e':'#7ec46a';ctx.fillRect(e.x-w/2,e.y-s-hb-3,w*(e.hp/e.max),hb);}
+  // hp bar — 스프라이트 머리 위에 (스프라이트 높이 ≈ s*3.4, 상단 ≈ e.y-2.24s)
+  if(e.hp<e.max){const w=s*2.1,hb=Math.max(3,s*(e.boss?0.22:0.18)); const by=e.y-s*2.4-hb;
+    ctx.fillStyle='#0006';ctx.fillRect(e.x-w/2,by,w,hb);
+    ctx.fillStyle=e.boss?'#e0a82e':'#7ec46a';ctx.fillRect(e.x-w/2,by,w*(e.hp/e.max),hb);}
 }
 function eyes(s,dx,dy,r){ // helper: pale eyes with dark pupils
   ctx.fillStyle='#f3ead6';ctx.beginPath();ctx.arc(-dx,dy,r,0,6.28);ctx.arc(dx,dy,r,0,6.28);ctx.fill();
