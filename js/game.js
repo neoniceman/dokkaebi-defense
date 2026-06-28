@@ -11,6 +11,8 @@ function loadAssets(){
   for(let i=1;i<=4;i++) IMG['map'+i]=_img('assets/maps/map'+i+'.png');
   ['archer','ballista','dark','frost','camp'].forEach(k=>IMG['t_'+k]=_img('assets/towers/'+k+'.png'));
   IMG.arrow=_img('assets/fx/arrow.png');
+  IMG.ice=_img('assets/fx/ice.png');
+  IMG.fireball=_img('assets/fx/fireball.png');
   ['goblin','brute','orc','imp','ogre','darkgob','king','bat','boss'].forEach(k=>{
     ESPRITE[k]=[]; for(let i=0;i<10;i++) ESPRITE[k][i]=_img('assets/enemies/'+k+'/f'+i+'.png'); });
 }
@@ -617,10 +619,19 @@ const ARROW_TOWERS={jangseung:1,kkachi:1,beom:1};
 function drawBullet(b){
   const def=b.def, id=b.tid, ang=Math.atan2(b.ty-b.sy,b.tx-b.sx);
   const R=CELL*0.10;
-  // 물리 발사체(궁수·석궁·병영)는 실제 화살 스프라이트로
+  // 빙결탑 → 얼음 크리스탈 발사체
+  const ice=IMG.ice;
+  if(id==='seori' && imgReady(ice)){
+    const h=CELL*0.42, w=h*(ice.naturalWidth/ice.naturalHeight);
+    ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
+    ctx.drawImage(ice,-w/2,-h/2,w,h); ctx.restore();
+    return;
+  }
+  // 물리 발사체 — 탑마다 모양이 다름: 궁수=긴 화살 / 석궁=짧고 굵은 볼트 / 병영=묵직한 큰 화살
   const arrow=IMG.arrow;
   if(ARROW_TOWERS[id] && imgReady(arrow)){
-    const h=CELL*0.5, w=h*(arrow.naturalWidth/arrow.naturalHeight);
+    const h = id==='kkachi'? CELL*0.34 : id==='beom'? CELL*0.62 : CELL*0.5;
+    const w = h*(arrow.naturalWidth/arrow.naturalHeight) * (id==='kkachi'? 2.1 : id==='beom'? 1.4 : 1);
     ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(ang+Math.PI/2);
     ctx.drawImage(arrow,-w/2,-h/2,w,h); ctx.restore();
     return;
