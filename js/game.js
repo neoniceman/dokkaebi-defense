@@ -400,6 +400,7 @@ function update(dt){
     const def=TOWERS[t.id];
     const st=towerStat(t);
     t.cd-=dt;
+    if(t.atk>0) t.atk-=dt/0.18;   // 공격 모션 감쇠 (~0.18초)
     const rng=st.range*CELL*G.buffs.range;
     // target = furthest along path in range
     let tgt=null,bd=-1;
@@ -458,6 +459,7 @@ function update(dt){
 function fire(t,def,tgt,st){
   G.bullets.push({sx:t.x,sy:t.y,x:t.x,y:t.y,tx:tgt.x,ty:tgt.y,t:0,dur:0.12,
     col:def.col,def,tid:t.id,tgtRef:tgt,dmg:st.dmg,splash:st.splash,br:t.branch,twr:t});
+  t.atk=1;            // 사수 공격 모션 트리거 (반동)
   SND.shoot(t.id);
 }
 // branch-aware damage: marks add bonus, sunder ignores armor
@@ -1119,12 +1121,18 @@ function drawTower(t){
     const uim=IMG[def.unit];
     if(uim && imgReady(uim)){
       const uh=CELL*0.78, uw=uh*(uim.naturalWidth/uim.naturalHeight);
+      const atk=Math.max(0,t.atk||0);              // 1(방금 발사)→0(평상시)
       ctx.save();
       ctx.translate(0,-CELL*0.46);                 // 타워 상단 플랫폼에 발이 닿도록
       // 살짝 그림자
       ctx.globalAlpha=.25; ctx.fillStyle='#000';
       ctx.beginPath(); ctx.ellipse(0,0,uw*0.34,uh*0.1,0,0,6.28); ctx.fill(); ctx.globalAlpha=1;
-      if(Math.cos(t.ang||0)>0) ctx.scale(-1,1);    // 적이 오른쪽이면 좌우 반전
+      const flip = Math.cos(t.ang||0)>0;
+      if(flip) ctx.scale(-1,1);                     // 적이 오른쪽이면 좌우 반전
+      // ---- 공격 모션: 발사 순간 뒤로 움찔(반동) → 스프링백 + 살짝 들썩 ----
+      const kick=Math.sin(atk*Math.PI);            // 0→1→0 (중간에 최대)
+      ctx.translate(-atk*uw*0.16, -kick*uh*0.05);  // 뒤로 반동 + 살짝 위로
+      ctx.rotate(-atk*0.18);                        // 뒤로 젖힘
       ctx.drawImage(uim, -uw/2, -uh*0.86, uw, uh);
       ctx.restore();
     }
